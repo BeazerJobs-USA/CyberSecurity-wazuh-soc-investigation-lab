@@ -2,6 +2,12 @@
 
 Multi-cloud cybersecurity lab built to practice SOC monitoring, detection engineering, Linux security, and incident investigation using Wazuh.
 
+## Architecture
+
+![Wazuh SOC Investigation Lab Architecture](architecture/architecture_wazuh_soc_lab.png)
+
+The lab uses a Vultr Ubuntu endpoint monitored by a Wazuh agent and an AWS-hosted Wazuh SIEM. Tailscale provides private connectivity for administrative access and security telemetry.
+
 ## Environment
 
 - AWS EC2 Wazuh SIEM
@@ -13,23 +19,7 @@ Multi-cloud cybersecurity lab built to practice SOC monitoring, detection engine
 - Fail2ban
 - Tailscale private networking
 
-## Architecture
-
-Windows Workstation  
-↓  
-Tailscale  
-↓  
-Vultr Security Lab  
-↓  
-Wazuh Agent  
-↓  
-Tailscale  
-↓  
-AWS Wazuh SIEM  
-↓  
-Threat Hunting and Analyst Investigation
-
-## Detection Cases
+## Detection and Investigation Cases
 
 ### Case 001 — SSH Configuration Change Detection
 
@@ -74,26 +64,27 @@ Observed:
 
 [View Case 004](cases/case-004-sudo-privilege-activity.md)
 
-## Current Status
+## Skills Demonstrated
+
+- SIEM deployment and administration
+- Linux security monitoring
+- Wazuh Threat Hunting
+- auditd telemetry
+- File Integrity Monitoring
+- SSH authentication analysis
+- Brute-force detection and correlation
+- Fail2ban enforcement
+- sudo and root privilege monitoring
+- Custom Wazuh detection engineering
+- Multi-cloud networking with Tailscale
+- Security event investigation and documentation
+
+## Project Outcome
 
 The core multi-cloud SOC lab is operational and the primary detection-validation scenarios are complete.
 
-The lab currently demonstrates:
-
-- AWS-hosted Wazuh SIEM
-- Vultr Ubuntu monitored endpoint
-- Private Tailscale connectivity
-- Linux auditd telemetry
-- Custom SSH configuration change detection
-- Real-time File Integrity Monitoring
-- SSH authentication monitoring
-- Brute-force correlation
-- Fail2ban enforcement
-- sudo and root privilege monitoring
-- Threat Hunting and analyst investigation
-
-The technical demonstration phase of this lab is complete. Remaining work focuses on documentation, architecture visualization, evidence organization, and final portfolio presentation.
+The project demonstrates a complete workflow from Linux endpoint activity to centralized SIEM detection, analyst investigation, and documented case studies.
 
 ## Disclaimer
 
-This repository documents a controlled cybersecurity lab environment. Test activity was intentionally generated for learning and detection validation purposes.
+This repository documents a controlled cybersecurity lab environment. Test activity was intentionally generated for learning and detection-validation purposes.
