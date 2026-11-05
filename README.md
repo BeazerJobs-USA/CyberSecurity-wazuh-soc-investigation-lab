@@ -33,13 +33,13 @@ Threat Hunting and Analyst Investigation
 
 ### Case 001 — SSH Configuration Change Detection
 
-Custom auditd-based Wazuh detection for changes to SSH configuration files.
+Built and validated a custom auditd-based Wazuh detection for changes to SSH configuration files.
 
-Documentation in progress.
+Evidence includes Rule 100100 alerts and SSH configuration change telemetry.
 
 ### Case 002 — Real-Time File Integrity Monitoring
 
-Validated real-time detection of file creation, modification, and deletion on a monitored Linux endpoint.
+Validated real-time detection of file creation, modification, and deletion on the Vultr Linux endpoint.
 
 Detected:
 
@@ -49,9 +49,50 @@ Detected:
 
 [View Case 002](cases/case-002-real-time-file-integrity-monitoring.md)
 
+### Case 003 — SSH Authentication and Internet Scanning Investigation
+
+Investigated repeated SSH authentication attempts against the Vultr endpoint and distinguished suspicious Internet scanning from authorized administrative access.
+
+Observed:
+
+- Rule 5710 — Attempt to login using a non-existent user
+- Rule 5712 — SSH brute-force correlation
+- Rule 5715 — Successful SSH authentication
+- Fail2ban automated blocking
+
+[View Case 003](cases/case-003-ssh-authentication-and-internet-scanning.md)
+
+### Case 004 — Sudo and Privilege Activity Investigation
+
+Validated detection of privileged Linux activity using Wazuh.
+
+Observed:
+
+- Rule 5402 — Successful sudo to ROOT executed
+- Rule 5501 — PAM login session opened
+- Rule 5502 — PAM login session closed
+
+[View Case 004](cases/case-004-sudo-privilege-activity.md)
+
 ## Current Status
 
-The core SIEM and endpoint telemetry pipeline is operational. Additional investigation cases will cover SSH authentication, privilege activity, and correlated Linux audit telemetry.
+The core multi-cloud SOC lab is operational and the primary detection-validation scenarios are complete.
+
+The lab currently demonstrates:
+
+- AWS-hosted Wazuh SIEM
+- Vultr Ubuntu monitored endpoint
+- Private Tailscale connectivity
+- Linux auditd telemetry
+- Custom SSH configuration change detection
+- Real-time File Integrity Monitoring
+- SSH authentication monitoring
+- Brute-force correlation
+- Fail2ban enforcement
+- sudo and root privilege monitoring
+- Threat Hunting and analyst investigation
+
+The technical demonstration phase of this lab is complete. Remaining work focuses on documentation, architecture visualization, evidence organization, and final portfolio presentation.
 
 ## Disclaimer
 
