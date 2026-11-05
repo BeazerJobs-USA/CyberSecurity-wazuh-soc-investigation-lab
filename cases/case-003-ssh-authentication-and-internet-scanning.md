@@ -166,3 +166,19 @@ Observed:
 - Fail2ban automated blocking of repeated offenders
 
 [View Case 003](cases/case-003-ssh-authentication-and-internet-scanning.md)
+
+### Brute Force Correlation
+
+Wazuh generated Rule 5712 correlation alerts for repeated invalid-user SSH attempts.
+
+```text
+Rule ID: 5712
+Description: sshd: brute force trying to get access to the system. Non existent user.
+Level: 10
+```
+
+Two Rule 5712 alerts were observed during the investigation period.
+
+This demonstrated that Wazuh was able to correlate multiple SSH authentication failures into a higher-severity brute-force detection rather than treating every failed attempt only as an isolated event.
+
+![Rule 5712 Brute Force Correlation](../evidence/ssh-authentication/03_rule5712_bruteforce_if_present.png)
