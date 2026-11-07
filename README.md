@@ -83,11 +83,9 @@ flowchart LR
     classDef vpn fill:#0b1726,stroke:#10b981,stroke-width:2px,color:#d1fae5;
     classDef siem fill:#0f172a,stroke:#3b82f6,stroke-width:2px,color:#f8fafc;
     classDef alert fill:#064e3b,stroke:#10b981,stroke-width:2px,color:#a7f3d0;
-    classDef pending fill:#1e293b,stroke:#f59e0b,stroke-width:1.5px,stroke-dasharray: 4 4,color:#cbd5e1;
-    classDef planned fill:#1e293b,stroke:#64748b,stroke-width:1.5px,stroke-dasharray: 5 5,color:#94a3b8;
+    classDef planned fill:#1e293b,stroke:#64748b,stroke-width:1.5px,stroke-dasharray:5,color:#94a3b8;
 
     subgraph Vultr["1. Monitored Endpoint (Vultr Cloud)"]
-        direction TB
         Host["Ubuntu 22.04 LTS<br/>(vultr-security-lab)"]
         Sensors["auditd (Kernel Audit)<br/>syscheck (Inotify FIM)"]
         Target["/etc/ssh/sshd_config<br/>/etc/ssh/sshd_config.d/*.conf"]
@@ -100,17 +98,15 @@ flowchart LR
     end
 
     subgraph AWS["3. Dedicated SIEM Platform (AWS Cloud - EC2)"]
-        direction TB
         Manager["Wazuh Manager 4.x<br/>(Analysisd Engine)"]
-        Rules["Custom Rules (local_rules.xml)<br/>• 100100: Modified (Lvl 8) [Case 001 & 002]<br/>• 100101: Added (Lvl 7) [Case 002]<br/>• 100102: Deleted (Lvl 7) [Case 002]"]
-        Dashboard["Wazuh Dashboard<br/>(Threat Hunting & Triage)"]
+        Rules["Custom Rules (local_rules.xml)<br/>Rule 100100: Modified (Level 8)<br/>Rule 100101: Added (Level 7)<br/>Rule 100102: Deleted (Level 7)"]
+        Dashboard["Wazuh Dashboard<br/>(Threat Hunting and Triage)"]
         Manager --> Rules
         Rules --> Dashboard
     end
 
     subgraph Cases["4. Evidence-Backed SOC Investigations"]
-        direction TB
-        C1["Case 001: Auditd SSH Change Alert<br/>(EV-01 to EV-03, Level 8 @ 01:48:49)"]
+        C1["Case 001: Auditd SSH Change Alert<br/>(EV-01 to EV-03, Level 8 at 01:48:49)"]
         C2["Case 002: Real-Time FIM Lifecycle<br/>(DEMO-01 to DEMO-03 via fim_demo.sh)"]
     end
 
@@ -120,15 +116,18 @@ flowchart LR
     Dashboard --> C2
 
     subgraph Roadmap["Planned Expansion (Roadmap)"]
-        direction LR
-        Win["Windows Endpoint + Sysmon"] -.-> Sentinel["Microsoft Sentinel"] -.-> KQL["KQL Threat Hunting"]
+        Win["Windows Endpoint + Sysmon"]
+        Sentinel["Microsoft Sentinel"]
+        KQL["KQL Threat Hunting"]
+        Win -.-> Sentinel
+        Sentinel -.-> KQL
     end
 
-    class Vultr,Host,Sensors,Target endpoint;
-    class Tunnel,VPN vpn;
-    class AWS,Manager,Rules,Dashboard siem;
-    class Cases,C1,C2 alert;
-    class Roadmap,Win,Sentinel,KQL planned;
+    class Host,Sensors,Target endpoint;
+    class VPN vpn;
+    class Manager,Rules,Dashboard siem;
+    class C1,C2 alert;
+    class Win,Sentinel,KQL planned;
 ```
 
 ---
