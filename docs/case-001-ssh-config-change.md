@@ -1,119 +1,70 @@
-# Case 001: Auditd-Based SSH Configuration Change Detection
+# Case 001: Wazuh FIM SSH Configuration Change Detection
 
 ## Executive Summary
 
 | Attribute | Investigation Details |
 |:---|:---|
-| **Incident Title** | Auditd Alert: OpenSSH Server Configuration Modification Detected |
-| **Monitored Asset** | `vultr-security-lab` (Ubuntu 22.04 LTS Cloud Workload on Vultr) |
-| **Telemetry Transport** | Tailscale Encrypted Mesh VPN to AWS Wazuh SIEM |
-| **Detection Mechanism** | Linux `auditd` Subsystem + Wazuh SIEM Manager Rule `100100` |
-| **Alert Timestamp** | 14 Oct 2026, 01:48:49 (Dashboard Local Time) |
-| **Alert Level** | Level 8 (Operational Warning / Configuration Modification) |
-| **Investigation Status** | **Working In-Lab Detection Verified; Host Terminal Correlation Pending** |
-| **Disposition** | **Disposition Pending Supporting Evidence** — Alert generation, Tailscale transmission, and dashboard metrics verified by in-lab captures. Final administrative disposition requires host-level auth log correlation and runtime `sshd -T` verification. |
+| **Incident Title** | OpenSSH configuration modification detected by custom Wazuh FIM rule |
+| **Monitored Asset** | `vultr-security-lab` on Vultr |
+| **Current Endpoint Snapshot** | Ubuntu 26.04.1 LTS, Wazuh agent v4.14.8, agent ID 001 |
+| **Telemetry Path** | Wazuh agent reporting through the lab's Tailscale-connected cloud architecture |
+| **Detection Mechanism** | Wazuh FIM/syscheck parent Rule 550 with custom child Rule 100100 |
+| **Alert Timestamp** | 14 Oct 2026, 01:48:49, dashboard local time |
+| **Alert Level** | Custom Rule 100100, Level 8 |
+| **Investigation Status** | Alert observed; final change attribution and configuration diff remain unverified |
+| **Disposition** | **Pending supporting evidence** |
 
----
+## Why This Case Matters
 
-## 1. Threat Context & Architecture
+Changes to `/etc/ssh/sshd_config` or `/etc/ssh/sshd_config.d/` can alter remote access controls. This case demonstrates an analyst workflow that starts with a real SIEM alert, validates what the dashboard actually proves, identifies gaps, and avoids assigning a benign or malicious disposition without supporting host evidence.
 
-The OpenSSH daemon controls remote administrative access to Linux cloud workloads. Alterations to `sshd_config` or its drop-in directory `/etc/ssh/sshd_config.d/` represent high-risk events that can expose hosts to unauthorized access, weakened ciphers, root login exposure, or credential compromise.
+## Detection Basis
 
-### Network Architecture: Vultr to AWS over Tailscale
-In this environment:
-1. **Endpoint Workload:** Hosted on **Vultr** (`vultr-security-lab`), running Ubuntu 22.04 LTS, OpenSSH server, Wazuh Agent, and the Linux `auditd` subsystem.
-2. **Overlay Mesh VPN:** A private **Tailscale** network connects the Vultr cloud host directly to the SIEM, encrypting all agent telemetry in transit across cloud boundaries.
-3. **Dedicated SIEM:** Hosted on **AWS EC2**, running Wazuh Manager 4.x and the Threat Hunting dashboard.
+The repository's `local_rules.xml` shows Rule 100100 as a child of built-in Wazuh FIM Rule 550:
 
-```
-[Vultr Cloud Server: vultr-security-lab]
-       │ (Linux auditd watcher on /etc/ssh/sshd_config)
-       ▼
-  Wazuh Agent
-       │
-       ▼ [Encrypted Point-to-Point Overlay: Tailscale Mesh VPN]
-       ▼
-[AWS Cloud: Dedicated Wazuh SIEM (Manager & Threat Hunting Dashboard)]
-       │
-       ▼
-  Rule 100100 Alert (Level 8) Triggered at 01:48:49
+```xml
+<rule id="100100" level="8">
+  <if_sid>550</if_sid>
+  <field name="file" type="pcre2">^/etc/ssh/sshd_config($|\.d/.*)</field>
+  <description>SSH configuration file modified: $(file)</description>
+</rule>
 ```
 
----
+This means the observed Rule 100100 event is defensibly described as **FIM/syscheck based**. Although `auditd` is active on the current endpoint, the repository does not contain evidence proving that the historical Rule 100100 alert was generated from a standalone auditd watch. Auditd is therefore treated as supporting host telemetry and a future who-data provider, not as the source of Case 001.
 
-## 2. Detection Mechanism: Linux Auditd Integration
+## Observed Evidence
 
-Rule 100100 operates as the working detection mechanism for OpenSSH server configuration changes, capturing events generated when administrative utilities or processes access and modify the configuration files:
+### EV-01: Rule 100100 Events View
+- `evidence/observed/01_rule100100_events_view.png`
+- Filtered to Rule 100100 and agent `vultr-security-lab`.
+- Shows one Level 8 hit at 01:48:49.
+- The original description ends with a blank value after `modified on`, documenting a real template/field issue in the earlier rule version.
 
-- **Subsystem:** Linux `auditd` audit watcher configured for write and attribute modification events (`-w /etc/ssh/sshd_config -p wa -k ssh_config_changes`).
-- **Telemetry Processing:** Ingested by the local Wazuh agent and forwarded across the Tailscale mesh to the AWS Wazuh manager.
-- **Rule Matching:** Evaluated against `local_rules.xml` on the AWS manager, firing Rule `100100` at **Level 8**.
+### EV-02: Rule 100100 Dashboard View
+- `evidence/observed/02_rule100100_dashboard_view.png`
+- Shows one alert in the filtered one-hour view and no Level 12+ alerts in that query scope.
+- The authentication counters are also filtered to Rule 100100. They must not be interpreted as proof that the host had no authentication failures.
 
-> **Note on Alert Level:** In Wazuh, Level 8 represents an operational warning or high-priority configuration change notification. It indicates that administrative or unauthorized configuration tampering occurred, warranting interactive analyst triage.
+### EV-03: 24-Hour `sshd_config` Search
+- `evidence/observed/03_sshd_config_search_24h.png`
+- Shows 19 Level 3 events and a Wazuh ATT&CK widget labeled `T1548.003 - Sudo and Sudo Caching`.
+- This establishes the presence of sudo-related telemetry in the search results. The ATT&CK classification alone does **not** prove that all 19 events were authorized, benign, or performed by a specific user.
 
----
+## Evidence Gaps and Required Verification
 
-## 3. Observed Evidence (Direct In-Lab Captures)
+| Step | Status | What Is Still Needed |
+|:---|:---:|:---|
+| Identify exact file/path from expanded Rule 100100 alert | Pending | Exported alert JSON or expanded event fields |
+| Review `syscheck.diff` | Pending | Alert field showing actual changed text, if available |
+| Attribute actor/process | Pending | Correlated auth/audit evidence at the Oct 14 alert timestamp |
+| Validate SSH syntax | Pending | `sudo sshd -t` output |
+| Validate effective SSH posture | Pending | `sudo sshd -T` output |
+| Determine change authorization | Pending | Maintenance record or operator confirmation tied to the timestamp |
 
-The working detection is documented by three authentic captures from the AWS Wazuh dashboard:
+## Analyst Conclusion
 
-### Evidence 01: Threat Hunting Events View (Rule 100100)
-- **Path:** `evidence/observed/01_rule100100_events_view.png`
-- **Query Filter:** `rule.id: 100100` AND `agent.name: vultr-security-lab`
-- **Observed Data:** Exactly 1 hit observed at 01:48:49. Alert fields capture agent name `vultr-security-lab`, rule ID `100100`, and severity Level 8.
-- **Template Bug Discovery:** The rule description displayed `"SSH configuration file modified on "` with trailing empty space. Root-cause analysis revealed that `agent.name` is not an extracted variable in Wazuh rule descriptions, causing it to expand to null. This prompted the v2 refactoring to `$(file)`.
+**Verified:** Rule 100100 fired as a Level 8 custom child of Wazuh FIM Rule 550 against the monitored endpoint.
 
-### Evidence 02: Threat Hunting Dashboard Metrics View
-- **Path:** `evidence/observed/02_rule100100_dashboard_view.png`
-- **Observed Metrics:** Confirms 1 Total alert in the 1-hour window. Dashboard widgets display:
-  - `1` Total Alert (Rule 100100 at Level 8)
-  - `0` Level 12 or above alerts
-  - `0` Authentication failure events (Under query `rule.id:100100`)
-  - `0` Authentication success events (Under query `rule.id:100100`)
-  - `Top 10 MITRE ATT&CKS: No results found` (confirming no unverified ATT&CK tags attached).
+**Not yet verified:** the exact changed directive, the actor/process responsible, whether the change was authorized, and whether the current v2 `$(file)` description has been observed in a live Rule 100100/100101/100102 lifecycle test.
 
-> [!IMPORTANT]
-> **Authentication Failure Metric Scope:**
-> No authentication failure events were displayed in the reviewed dashboard view filtered to rule ID 100100. This observation is limited to that specific rule and query scope and does not establish the absence of other authentication failures or brute-force activity across the monitored host.
-
-### Evidence 03: 24-Hour Contextual Free-Text Search
-- **Path:** `evidence/observed/03_sshd_config_search_24h.png`
-- **Query:** `sshd_config` across a 24-hour window
-- **Observed Data:** Returned 19 total events, all classified at Level 3. The dashboard ATT&CK widget categorized these under technique `T1548.003 - Sudo and Sudo Caching`.
-- **Contextual Significance:** These events correspond to Wazuh's default decoder matching routine administrative `sudo` command executions. The technique tag classifies the administrative elevation mechanism; it does not indicate malicious exploitation.
-
----
-
-## 4. SOC Investigation Record & Verification Matrix
-
-To maintain defensibility during technical interviews, the investigation record clearly distinguishes verified telemetry from host-level evidence requirements:
-
-| # | Investigation Step | Verification Method | Status | Evidence Required for Verification |
-|:---|:---|:---|:---:|:---|
-| **1** | **Identify File & Target Directives** | Expanded alert JSON in Wazuh dashboard | **Pending Evidence** | Expanded alert JSON or raw log export showing specific directives modified. |
-| **2** | **Correlate Actor & Process** | Audit active sessions & `auth.log`: `sudo grep -E 'COMMAND=.*sshd_config' /var/log/auth.log*` | **Pending Evidence** | Terminal output from `/var/log/auth.log` identifying the operator username, command line, and concurrent login session. |
-| **3** | **Validate Change Authorization** | Compare timestamp against operator notes | **Pending Evidence** | Documented maintenance confirmation matching the 01:48:49 timestamp. |
-| **4** | **Audit Effective SSH Posture** | Run `sudo sshd -T` and `sudo sshd -t` on host | **Pending Evidence** | Live command output from `sudo sshd -t` (syntax check) and `sudo sshd -T` confirming runtime parameters. |
-| **5** | **Review Host Authentication Scope** | Query broader auth logs: `sudo journalctl -u ssh` | **Pending Evidence** | Host-level authentication logs spanning the 24-hour window to establish whether failed logins occurred outside the rule 100100 filter. |
-| **6** | **Triage 24-Hour Context Events** | Audit 19 search events in Threat Hunting | **VERIFIED** | Screenshot 03 confirms 19 Level 3 events associated with `T1548.003 (Sudo and Sudo Caching)`, reflecting routine sudo executions. |
-
----
-
-## 5. Containment & Remediation Playbook
-
-In the event that an SSH configuration modification alert is determined to be unauthorized or anomalous, the following containment protocol is established:
-
-1. **Preserve Volatile Evidence:** Do not terminate the active administrative terminal session. Export Wazuh alert JSON, captured diffs, and host memory/process state.
-2. **Revert Configuration:** Restore `/etc/ssh/sshd_config` and drop-ins under `/etc/ssh/sshd_config.d/` from a trusted baseline.
-3. **Validate Syntax Prior to Reload:** Always execute `sudo sshd -t` before reloading the daemon to prevent syntax-induced lockout.
-4. **Reload Service:** Execute `sudo systemctl reload ssh` (or `systemctl reload sshd`).
-5. **Session & Key Audit:** Review `/home/*/.ssh/authorized_keys` and `/etc/pam.d/sshd` for unauthorized persistence keys.
-6. **Network Containment:** Enforce strict source restrictions via host firewall (UFW).
-7. **Credential Invalidation:** Rotate administrative SSH keypairs if unauthorized access is suspected.
-
----
-
-## 6. Key Takeaways
-
-1. **Working Detection:** Rule 100100 reliably alerts on OpenSSH configuration changes on the Vultr host, with telemetry transmitted securely across cloud boundaries over Tailscale to the AWS Wazuh SIEM.
-2. **Auditd & FIM Synergy:** While auditd captures command execution and process events, pairing it with real-time FIM (tested in Case 002) provides complete coverage of both execution context and file modification diffs.
+The correct disposition is therefore **pending supporting evidence**, not “benign change” and not “malicious tampering.”
