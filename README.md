@@ -75,59 +75,25 @@ The lab connects a monitored Vultr Linux endpoint to a dedicated AWS Wazuh SIEM 
   <sub><i>Master architecture diagram (<a href="assets/architecture/lab-architecture.svg">View editable SVG</a>)</i></sub>
 </div>
 
-### Hybrid Cloud Data Flow
+### Hybrid Cloud Telemetry Flow
 
-```mermaid
-flowchart LR
-    classDef endpoint fill:#0f172a,stroke:#0284c7,stroke-width:2px,color:#f8fafc;
-    classDef vpn fill:#0b1726,stroke:#10b981,stroke-width:2px,color:#d1fae5;
-    classDef siem fill:#0f172a,stroke:#3b82f6,stroke-width:2px,color:#f8fafc;
-    classDef alert fill:#064e3b,stroke:#10b981,stroke-width:2px,color:#a7f3d0;
-    classDef planned fill:#1e293b,stroke:#64748b,stroke-width:1.5px,stroke-dasharray:5,color:#94a3b8;
-
-    subgraph Vultr["1. Monitored Endpoint (Vultr Cloud)"]
-        Host["Ubuntu 22.04 LTS<br/>(vultr-security-lab)"]
-        Sensors["auditd (Kernel Audit)<br/>syscheck (Inotify FIM)"]
-        Target["/etc/ssh/sshd_config<br/>/etc/ssh/sshd_config.d/*.conf"]
-        Target --> Sensors
-        Sensors --> Host
-    end
-
-    subgraph Tunnel["2. Network Overlay"]
-        VPN["Tailscale Mesh VPN<br/>Point-to-Point WireGuard Tunnel<br/>Encrypted Telemetry Across Clouds"]
-    end
-
-    subgraph AWS["3. Dedicated SIEM Platform (AWS Cloud - EC2)"]
-        Manager["Wazuh Manager 4.x<br/>(Analysisd Engine)"]
-        Rules["Custom Rules (local_rules.xml)<br/>Rule 100100: Modified (Level 8)<br/>Rule 100101: Added (Level 7)<br/>Rule 100102: Deleted (Level 7)"]
-        Dashboard["Wazuh Dashboard<br/>(Threat Hunting and Triage)"]
-        Manager --> Rules
-        Rules --> Dashboard
-    end
-
-    subgraph Cases["4. Evidence-Backed SOC Investigations"]
-        C1["Case 001: Auditd SSH Change Alert<br/>(EV-01 to EV-03, Level 8 at 01:48:49)"]
-        C2["Case 002: Real-Time FIM Lifecycle<br/>(DEMO-01 to DEMO-03 via fim_demo.sh)"]
-    end
-
-    Host -->|Encrypted Telemetry| VPN
-    VPN -->|Port 1514/1515 TCP| Manager
-    Dashboard --> C1
-    Dashboard --> C2
-
-    subgraph Roadmap["Planned Expansion (Roadmap)"]
-        Win["Windows Endpoint + Sysmon"]
-        Sentinel["Microsoft Sentinel"]
-        KQL["KQL Threat Hunting"]
-        Win -.-> Sentinel
-        Sentinel -.-> KQL
-    end
-
-    class Host,Sensors,Target endpoint;
-    class VPN vpn;
-    class Manager,Rules,Dashboard siem;
-    class C1,C2 alert;
-    class Win,Sentinel,KQL planned;
+```text
+┌──────────────────────────────────────┐        ┌───────────────────────────────┐        ┌──────────────────────────────────────┐
+│ 1. Monitored Host (Vultr Cloud)      │        │ 2. Encrypted Network Overlay  │        │ 3. Dedicated SIEM (AWS EC2 Instance) │
+│    Ubuntu 22.04 LTS (Security Lab)   │        │    Tailscale Mesh VPN         │        │    Wazuh Manager 4.x (Analysisd)     │
+│    • Linux auditd (Kernel Audit)     │ ──────>│    • WireGuard Point-to-Point │ ──────>│    • Custom Rules (local_rules.xml)  │
+│    • syscheck (Inotify Real-Time FIM)│        │    • Zero Open Inbound Ports  │        │    • Rule 100100 (Level 8: Modified) │
+│    • Target: /etc/ssh/sshd_config    │        │    • Private 100.x.x.x Mesh   │        │    • Rule 100101 (Level 7: Added)    │
+│    • Target: sshd_config.d/*.conf    │        │    • Cross-Cloud Transit      │        │    • Rule 100102 (Level 7: Deleted)  │
+└──────────────────────────────────────┘        └───────────────────────────────┘        └──────────────────────────────────────┘
+                                                                                                    │
+                                                                                                    ▼
+┌────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┐
+│ 4. SOC Threat Hunting Dashboard & Investigation Cases                                                                  │
+│    • Case 001: Auditd SSH Change Alert (Observed Alert 14 Oct 2026, 01:48:49 @ Level 8, EV-01..03)                     │
+│    • Case 002: Real-Time FIM Lifecycle Verification (Create 100101, Modify 100100, Delete 100102 via fim_demo.sh)     │
+│    • Threat Triage: 0 auth failures (rule 100100 filter) | 19 Level 3 Sudo events (MITRE T1548.003)                   │
+└────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┘
 ```
 
 ---
