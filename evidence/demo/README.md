@@ -1,22 +1,12 @@
-# Real-Time FIM Lifecycle Demonstration Telemetry
+# Safe FIM Lifecycle Test Evidence
 
-## Overview
+## Purpose
 
-This directory contains the verified test execution records for **Case 002: Real-Time File Integrity Monitoring (FIM) Lifecycle Detection**.
+This directory contains the execution record for the controlled FIM lifecycle test performed with `scripts/fim_demo.sh`.
 
-The test was executed on the monitored Ubuntu endpoint (`vultr-security-lab`) using the automated test harness [`scripts/fim_demo.sh`](../../scripts/fim_demo.sh) to validate the custom Wazuh ruleset across all three file lifecycle states without disrupting operational SSH daemon settings.
+The script creates, modifies, and deletes a comment only file under `/etc/ssh/sshd_config.d/`. It is designed to exercise the custom rule paths without changing active SSH behavior.
 
----
-
-## Provenance Policy: Lab Demo Telemetry
-
-As defined in the [Evidence Integrity Policy](../README.md), all test output generated via `scripts/fim_demo.sh` is classified as **Lab Demo Telemetry** and maintained in this dedicated `evidence/demo/` directory to preserve strict separation from initial baseline observations in `evidence/observed/`.
-
----
-
-## 1. Execution Timeline Record
-
-The recorded execution log from [`fim_demo_timeline.txt`](fim_demo_timeline.txt):
+## Recorded test actions
 
 ```text
 2026-10-14T02:15:10Z  CREATED  /etc/ssh/sshd_config.d/99-fim-demo.conf  (expect rule 100101)
@@ -24,43 +14,19 @@ The recorded execution log from [`fim_demo_timeline.txt`](fim_demo_timeline.txt)
 2026-10-14T02:16:05Z  DELETED  /etc/ssh/sshd_config.d/99-fim-demo.conf  (expect rule 100102)
 ```
 
-> [!NOTE]
-> The Wazuh dashboard displays timestamps in the analyst browser's local time zone. The agent inotify logs and `scripts/fim_demo.sh` record events in UTC.
+## Current status
 
----
+**TEST EXECUTED. ALERT VERIFICATION PENDING.**
 
-## 2. Verified Rule Lifecycle Events
+The timeline proves that the three filesystem actions occurred. It does not prove that Wazuh generated Rules 100101, 100100, and 100102 for those actions.
 
-### Step 1: File Creation (Rule 100101 — Level 7)
-- **Target File:** `/etc/ssh/sshd_config.d/99-fim-demo.conf`
-- **Action:** File created with comment `# FIM demonstration file.`
-- **Triggered Parent:** Built-in syscheck rule `554` (File added to the system).
-- **Triggered Child:** Custom rule `100101` (Severity Level 7).
-- **Rendered Description:** `SSH configuration file added: /etc/ssh/sshd_config.d/99-fim-demo.conf`
-- **Verification Status:** **VERIFIED**
+## Required evidence before calling this case verified
 
-### Step 2: File Modification (Rule 100100 — Level 8)
-- **Target File:** `/etc/ssh/sshd_config.d/99-fim-demo.conf`
-- **Action:** Appended second comment line with timestamp.
-- **Triggered Parent:** Built-in syscheck rule `550` (Integrity checksum changed).
-- **Triggered Child:** Custom rule `100100` (Severity Level 8).
-- **Rendered Description:** `SSH configuration file modified: /etc/ssh/sshd_config.d/99-fim-demo.conf`
-- **Diff Tracking:** Captured unified textual difference in `syscheck.diff`.
-- **Verification Status:** **VERIFIED**
+1. `wazuh-analysisd -t` passes on the manager after the v2 rules are deployed.
+2. The live agent configuration shows directory based FIM coverage for `/etc/ssh`.
+3. A Wazuh event capture shows Rule 100101 for the test file creation.
+4. A Wazuh event capture shows Rule 100100 for the test file modification and the v2 `$(file)` description.
+5. A Wazuh event capture shows Rule 100102 for the cleanup deletion.
+6. If the project claims text change reporting, the expanded event should show `syscheck.diff`.
 
-### Step 3: File Deletion (Rule 100102 — Level 7)
-- **Target File:** `/etc/ssh/sshd_config.d/99-fim-demo.conf`
-- **Action:** Cleanup via `sudo scripts/fim_demo.sh --cleanup`.
-- **Triggered Parent:** Built-in syscheck rule `553` (File deleted).
-- **Triggered Child:** Custom rule `100102` (Severity Level 7).
-- **Rendered Description:** `SSH configuration file deleted: /etc/ssh/sshd_config.d/99-fim-demo.conf`
-- **Verification Status:** **VERIFIED**
-
----
-
-## 3. Key Technical Takeaway
-
-Executing this full lifecycle test confirmed that:
-1. The PCRE2 regular expression `^/etc/ssh/sshd_config($|\.d/.*)` correctly matches files within the drop-in directory `/etc/ssh/sshd_config.d/`.
-2. The description variable template bug is resolved in ruleset v2, rendering the explicit path `$(file)` across all three alerts.
-3. Drop-in configuration tampering is reliably alerted across creation, modification, and deletion events.
+Until those artifacts exist, this directory is intentionally labeled **test execution evidence**, not verified alert telemetry.
