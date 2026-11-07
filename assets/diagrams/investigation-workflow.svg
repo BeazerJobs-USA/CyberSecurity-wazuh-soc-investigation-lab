@@ -1,0 +1,110 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1100 500" width="100%" height="100%" style="background:#0b1120; font-family:'Segoe UI', -apple-system, BlinkMacSystemFont, Roboto, sans-serif;">
+  <defs>
+    <linearGradient id="wfGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#1e293b"/>
+      <stop offset="100%" stop-color="#0f172a"/>
+    </linearGradient>
+    <marker id="wfArrow" viewBox="0 0 10 10" refX="6" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path d="M 0 1 L 10 5 L 0 9 z" fill="#38bdf8"/>
+    </marker>
+  </defs>
+
+  <!-- Title -->
+  <text x="550" y="40" text-anchor="middle" fill="#ffffff" font-size="20" font-weight="700">SOC INCIDENT INVESTIGATION &amp; TRIAGE LIFECYCLE</text>
+  <text x="550" y="65" text-anchor="middle" fill="#94a3b8" font-size="13">Standard Operating Procedure: SSH Configuration Modification &amp; FIM Alert Triage</text>
+
+  <!-- Step 1: Telemetry Event -->
+  <g transform="translate(40, 100)">
+    <rect width="180" height="240" rx="10" fill="url(#wfGrad)" stroke="#0284c7" stroke-width="1.5"/>
+    <rect width="180" height="34" rx="10" fill="#0284c7" fill-opacity="0.2"/>
+    <text x="90" y="23" text-anchor="middle" fill="#38bdf8" font-size="13" font-weight="700">1. DETECTION TRIGGER</text>
+    <circle cx="90" cy="65" r="22" fill="#0f172a" stroke="#38bdf8" stroke-width="1.5"/>
+    <text x="90" y="70" text-anchor="middle" fill="#38bdf8" font-size="14" font-weight="700">VULTR</text>
+    <text x="90" y="110" text-anchor="middle" fill="#f8fafc" font-size="12" font-weight="600">Auditd / FIM Trigger</text>
+    <text x="90" y="130" text-anchor="middle" fill="#94a3b8" font-size="11">/etc/ssh/sshd_config</text>
+    <text x="90" y="150" text-anchor="middle" fill="#64748b" font-size="11">Auditd watcher / inotify</text>
+    <rect x="15" y="175" width="150" height="50" rx="6" fill="#0f172a" stroke="#1e293b"/>
+    <text x="90" y="195" text-anchor="middle" fill="#cbd5e1" font-size="10">Telemetry Transport</text>
+    <text x="90" y="212" text-anchor="middle" fill="#34d399" font-size="10">Tailscale Encrypted Mesh</text>
+  </g>
+
+  <!-- Arrow 1 -> 2 -->
+  <line x1="220" y1="220" x2="250" y2="220" stroke="#38bdf8" stroke-width="2" marker-end="url(#wfArrow)"/>
+
+  <!-- Step 2: Custom Alert Rule -->
+  <g transform="translate(255, 100)">
+    <rect width="180" height="240" rx="10" fill="url(#wfGrad)" stroke="#10b981" stroke-width="1.5"/>
+    <rect width="180" height="34" rx="10" fill="#10b981" fill-opacity="0.2"/>
+    <text x="90" y="23" text-anchor="middle" fill="#34d399" font-size="13" font-weight="700">2. SIEM EVALUATION</text>
+    <circle cx="90" cy="65" r="22" fill="#0f172a" stroke="#10b981" stroke-width="1.5"/>
+    <text x="90" y="71" text-anchor="middle" fill="#34d399" font-size="14" font-weight="700">AWS</text>
+    <text x="90" y="110" text-anchor="middle" fill="#f8fafc" font-size="12" font-weight="600">Wazuh Manager Rule</text>
+    <text x="90" y="130" text-anchor="middle" fill="#94a3b8" font-size="11">Rule 100100 (Level 8)</text>
+    <text x="90" y="150" text-anchor="middle" fill="#64748b" font-size="11">Rules 100101/102 (Lvl 7)</text>
+    <rect x="15" y="175" width="150" height="50" rx="6" fill="#0f172a" stroke="#065f46"/>
+    <text x="90" y="195" text-anchor="middle" fill="#34d399" font-size="10" font-weight="700">Alert Dispatched</text>
+    <text x="90" y="212" text-anchor="middle" fill="#a7f3d0" font-size="10">01:48:49 Timestamp</text>
+  </g>
+
+  <!-- Arrow 2 -> 3 -->
+  <line x1="435" y1="220" x2="465" y2="220" stroke="#38bdf8" stroke-width="2" marker-end="url(#wfArrow)"/>
+
+  <!-- Step 3: SOC Triage -->
+  <g transform="translate(470, 100)">
+    <rect width="180" height="240" rx="10" fill="url(#wfGrad)" stroke="#c084fc" stroke-width="1.5"/>
+    <rect width="180" height="34" rx="10" fill="#c084fc" fill-opacity="0.2"/>
+    <text x="90" y="23" text-anchor="middle" fill="#c084fc" font-size="13" font-weight="700">3. ALERT TRIAGE</text>
+    <circle cx="90" cy="65" r="22" fill="#0f172a" stroke="#c084fc" stroke-width="1.5"/>
+    <text x="90" y="70" text-anchor="middle" fill="#c084fc" font-size="15" font-weight="700">SOC</text>
+    <text x="90" y="110" text-anchor="middle" fill="#f8fafc" font-size="12" font-weight="600">Threat Hunting Review</text>
+    <text x="90" y="130" text-anchor="middle" fill="#94a3b8" font-size="11">Event count (1 hit)</text>
+    <text x="90" y="150" text-anchor="middle" fill="#64748b" font-size="11">24h context (19 evts)</text>
+    <rect x="15" y="175" width="150" height="50" rx="6" fill="#0f172a" stroke="#1e293b"/>
+    <text x="90" y="195" text-anchor="middle" fill="#cbd5e1" font-size="10">0 Auth Failures Scope</text>
+    <text x="90" y="212" text-anchor="middle" fill="#64748b" font-size="10">Rule 100100 query only</text>
+  </g>
+
+  <!-- Arrow 3 -> 4 -->
+  <line x1="650" y1="220" x2="680" y2="220" stroke="#38bdf8" stroke-width="2" marker-end="url(#wfArrow)"/>
+
+  <!-- Step 4: Host Forensics -->
+  <g transform="translate(685, 100)">
+    <rect width="180" height="240" rx="10" fill="url(#wfGrad)" stroke="#f59e0b" stroke-width="1.5"/>
+    <rect width="180" height="34" rx="10" fill="#f59e0b" fill-opacity="0.2"/>
+    <text x="90" y="23" text-anchor="middle" fill="#f59e0b" font-size="13" font-weight="700">4. HOST AUDITING</text>
+    <circle cx="90" cy="65" r="22" fill="#0f172a" stroke="#f59e0b" stroke-width="1.5"/>
+    <text x="90" y="70" text-anchor="middle" fill="#f59e0b" font-size="15" font-weight="700">CLI</text>
+    <text x="90" y="110" text-anchor="middle" fill="#f8fafc" font-size="12" font-weight="600">Runbook Checks</text>
+    <text x="90" y="130" text-anchor="middle" fill="#94a3b8" font-size="11">sshd -T (effective)</text>
+    <text x="90" y="150" text-anchor="middle" fill="#64748b" font-size="11">sshd -t (syntax)</text>
+    <rect x="15" y="175" width="150" height="50" rx="6" fill="#0f172a" stroke="#1e293b"/>
+    <text x="90" y="195" text-anchor="middle" fill="#f59e0b" font-size="10">Verification Status</text>
+    <text x="90" y="212" text-anchor="middle" fill="#cbd5e1" font-size="10">Pending Live Evidence</text>
+  </g>
+
+  <!-- Arrow 4 -> 5 -->
+  <line x1="865" y1="220" x2="895" y2="220" stroke="#38bdf8" stroke-width="2" marker-end="url(#wfArrow)"/>
+
+  <!-- Step 5: Disposition & Action -->
+  <g transform="translate(900, 100)">
+    <rect width="160" height="240" rx="10" fill="url(#wfGrad)" stroke="#38bdf8" stroke-width="1.5"/>
+    <rect width="160" height="34" rx="10" fill="#38bdf8" fill-opacity="0.2"/>
+    <text x="80" y="23" text-anchor="middle" fill="#38bdf8" font-size="13" font-weight="700">5. DISPOSITION</text>
+    <circle cx="80" cy="65" r="22" fill="#0f172a" stroke="#38bdf8" stroke-width="1.5"/>
+    <text x="80" y="71" text-anchor="middle" fill="#38bdf8" font-size="14" font-weight="700">RES</text>
+    <text x="80" y="110" text-anchor="middle" fill="#f8fafc" font-size="12" font-weight="600">Triage Decision</text>
+    <text x="80" y="130" text-anchor="middle" fill="#94a3b8" font-size="11">Evidence Required</text>
+    <text x="80" y="150" text-anchor="middle" fill="#64748b" font-size="11">For Final Verdict</text>
+    <rect x="12" y="175" width="136" height="50" rx="6" fill="#0f172a" stroke="#1e293b"/>
+    <text x="80" y="195" text-anchor="middle" fill="#cbd5e1" font-size="10">Admin vs Attack</text>
+    <text x="80" y="212" text-anchor="middle" fill="#38bdf8" font-size="10">Requires Host Proof</text>
+  </g>
+
+  <!-- Bottom Details Bar -->
+  <g transform="translate(40, 365)">
+    <rect width="1020" height="95" rx="8" fill="#1e293b" fill-opacity="0.6" stroke="#334155" stroke-width="1"/>
+    <text x="25" y="30" fill="#38bdf8" font-size="12" font-weight="700">ANALYST TRIAGE PROTOCOL &amp; EVIDENCE THRESHOLD</text>
+    <text x="25" y="55" fill="#e2e8f0" font-size="11">&#x2022; Expected Admin Change: Requires matching change record + verified sudo log + passing sshd -T runtime output.</text>
+    <text x="25" y="75" fill="#94a3b8" font-size="11">&#x2022; Note on Auth Metrics: 0 authentication failures displayed in Evidence 02 applies strictly to the rule.id: 100100 filter view.</text>
+  </g>
+</svg>

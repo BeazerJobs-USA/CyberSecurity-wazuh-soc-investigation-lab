@@ -1,0 +1,8 @@
+# Raw evidence collected on the server. Review, redact, then copy files into evidence/ on purpose.
+collected_evidence/
+/fim_demo_timeline.txt
+
+# Never commit secrets
+*.pem
+*.key
+.env

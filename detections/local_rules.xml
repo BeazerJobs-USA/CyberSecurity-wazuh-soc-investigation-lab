@@ -1,0 +1,40 @@
+<!--
+  Custom Wazuh FIM rules: OpenSSH server configuration changes.
+
+  Install on the Wazuh manager:  /var/ossec/etc/rules/local_rules.xml
+  Validate before reloading:     sudo /var/ossec/bin/wazuh-analysisd -t
+  Apply:                         sudo systemctl restart wazuh-manager
+
+  Parent rules are the built-in syscheck (FIM) rules:
+    550 = integrity checksum changed (file modified)
+    553 = file deleted
+    554 = file added
+  The path is matched on the decoded FIM field "file" (not syscheck.path),
+  which is the field name Wazuh documents for custom FIM rules.
+  Custom rule IDs stay inside the 100000-120000 range reserved for local rules.
+  See detections/CHANGELOG.md for rule history.
+-->
+<group name="syscheck,ssh_configuration_monitoring,">
+
+  <rule id="100100" level="8">
+    <if_sid>550</if_sid>
+    <field name="file" type="pcre2">^/etc/ssh/sshd_config($|\.d/.*)</field>
+    <description>SSH configuration file modified: $(file)</description>
+    <group>ssh_config_change,configuration_change,</group>
+  </rule>
+
+  <rule id="100101" level="7">
+    <if_sid>554</if_sid>
+    <field name="file" type="pcre2">^/etc/ssh/sshd_config($|\.d/.*)</field>
+    <description>SSH configuration file added: $(file)</description>
+    <group>ssh_config_change,configuration_change,</group>
+  </rule>
+
+  <rule id="100102" level="7">
+    <if_sid>553</if_sid>
+    <field name="file" type="pcre2">^/etc/ssh/sshd_config($|\.d/.*)</field>
+    <description>SSH configuration file deleted: $(file)</description>
+    <group>ssh_config_change,configuration_change,</group>
+  </rule>
+
+</group>

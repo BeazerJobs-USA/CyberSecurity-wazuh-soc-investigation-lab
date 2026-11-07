@@ -1,0 +1,231 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1920 1080" width="100%" height="100%" style="background:#0b1120; font-family:'Segoe UI', -apple-system, BlinkMacSystemFont, Roboto, Helvetica, Arial, sans-serif;">
+  <defs>
+    <!-- Background Gradients -->
+    <linearGradient id="coverBg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0b1120"/>
+      <stop offset="60%" stop-color="#0f172a"/>
+      <stop offset="100%" stop-color="#090d16"/>
+    </linearGradient>
+    
+    <linearGradient id="cardGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#1e293b" stop-opacity="0.95"/>
+      <stop offset="100%" stop-color="#0f172a" stop-opacity="0.98"/>
+    </linearGradient>
+
+    <radialGradient id="cyanGlow" cx="20%" cy="20%" r="50%">
+      <stop offset="0%" stop-color="#0ea5e9" stop-opacity="0.18"/>
+      <stop offset="100%" stop-color="#0b1120" stop-opacity="0"/>
+    </radialGradient>
+
+    <radialGradient id="blueGlow" cx="80%" cy="15%" r="50%">
+      <stop offset="0%" stop-color="#3b82f6" stop-opacity="0.15"/>
+      <stop offset="100%" stop-color="#0b1120" stop-opacity="0"/>
+    </radialGradient>
+
+    <radialGradient id="emeraldGlow" cx="85%" cy="80%" r="45%">
+      <stop offset="0%" stop-color="#10b981" stop-opacity="0.12"/>
+      <stop offset="100%" stop-color="#0b1120" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+
+  <!-- Background Base -->
+  <rect width="1920" height="1080" fill="url(#coverBg)"/>
+
+  <!-- Subtle Ambient Glows -->
+  <circle cx="350" cy="200" r="500" fill="url(#cyanGlow)"/>
+  <circle cx="1600" cy="180" r="550" fill="url(#blueGlow)"/>
+  <circle cx="1650" cy="900" r="450" fill="url(#emeraldGlow)"/>
+
+  <!-- Architectural Background Grid Lines -->
+  <g opacity="0.12" stroke="#38bdf8" stroke-width="0.7">
+    <!-- Horizontal lines -->
+    <line x1="0" y1="60" x2="1920" y2="60"/><line x1="0" y1="120" x2="1920" y2="120"/>
+    <line x1="0" y1="180" x2="1920" y2="180"/><line x1="0" y1="240" x2="1920" y2="240"/>
+    <line x1="0" y1="300" x2="1920" y2="300"/><line x1="0" y1="360" x2="1920" y2="360"/>
+    <line x1="0" y1="420" x2="1920" y2="420"/><line x1="0" y1="480" x2="1920" y2="480"/>
+    <line x1="0" y1="540" x2="1920" y2="540"/><line x1="0" y1="600" x2="1920" y2="600"/>
+    <line x1="0" y1="660" x2="1920" y2="660"/><line x1="0" y1="720" x2="1920" y2="720"/>
+    <line x1="0" y1="780" x2="1920" y2="780"/><line x1="0" y1="840" x2="1920" y2="840"/>
+    <line x1="0" y1="900" x2="1920" y2="900"/><line x1="0" y1="960" x2="1920" y2="960"/>
+    <line x1="1020" y1="0" x2="1020" y2="1080"/>
+    <!-- Vertical lines -->
+    <line x1="60" y1="0" x2="60" y2="1080"/><line x1="120" y1="0" x2="120" y2="1080"/>
+    <line x1="180" y1="0" x2="180" y2="1080"/><line x1="240" y1="0" x2="240" y2="1080"/>
+    <line x1="300" y1="0" x2="300" y2="1080"/><line x1="360" y1="0" x2="360" y2="1080"/>
+    <line x1="420" y1="0" x2="420" y2="1080"/><line x1="480" y1="0" x2="480" y2="1080"/>
+    <line x1="540" y1="0" x2="540" y2="1080"/><line x1="600" y1="0" x2="600" y2="1080"/>
+    <line x1="660" y1="0" x2="660" y2="1080"/><line x1="720" y1="0" x2="720" y2="1080"/>
+    <line x1="780" y1="0" x2="780" y2="1080"/><line x1="840" y1="0" x2="840" y2="1080"/>
+    <line x1="900" y1="0" x2="900" y2="1080"/><line x1="960" y1="0" x2="960" y2="1080"/>
+    <line x1="1020" y1="0" x2="1020" y2="1080"/><line x1="1080" y1="0" x2="1080" y2="1080"/>
+    <line x1="1140" y1="0" x2="1140" y2="1080"/><line x1="1200" y1="0" x2="1200" y2="1080"/>
+    <line x1="1260" y1="0" x2="1260" y2="1080"/><line x1="1320" y1="0" x2="1320" y2="1080"/>
+    <line x1="1380" y1="0" x2="1380" y2="1080"/><line x1="1440" y1="0" x2="1440" y2="1080"/>
+    <line x1="1500" y1="0" x2="1500" y2="1080"/><line x1="1560" y1="0" x2="1560" y2="1080"/>
+    <line x1="1620" y1="0" x2="1620" y2="1080"/><line x1="1680" y1="0" x2="1680" y2="1080"/>
+    <line x1="1740" y1="0" x2="1740" y2="1080"/><line x1="1800" y1="0" x2="1800" y2="1080"/>
+    <line x1="1860" y1="0" x2="1860" y2="1080"/>
+  </g>
+
+  <!-- Top Pill / Badge -->
+  <g transform="translate(120, 95)">
+    <rect width="520" height="40" rx="20" fill="#0f1f38" stroke="#00e5ff" stroke-width="1.2"/>
+    <circle cx="22" cy="20" r="6" fill="#10b981"/>
+    <text x="38" y="25" fill="#00e5ff" font-size="14.5" font-weight="700" letter-spacing="1">HYBRID CLOUD SECURITY MONITORING &amp; DETECTION LAB</text>
+  </g>
+
+  <!-- Main Title & Subtitle -->
+  <text x="120" y="190" fill="#ffffff" font-size="54" font-weight="800" letter-spacing="0.5">ENTERPRISE SOC INVESTIGATION LAB</text>
+  <text x="120" y="245" fill="#38bdf8" font-size="28" font-weight="700">Cloud Threat Detection, Linux Auditd &amp; Real-Time FIM Pipeline</text>
+
+  <!-- Project Introduction / Context -->
+  <text x="120" y="295" fill="#94a3b8" font-size="18.5" font-weight="400">Single-host cloud security lab on Vultr (Ubuntu 22.04 LTS) reporting over Tailscale encrypted mesh VPN to AWS Wazuh SIEM.</text>
+  <text x="120" y="325" fill="#94a3b8" font-size="18.5" font-weight="400">Dual case study verification: Auditd configuration detection (Case 001) &amp; Real-time FIM lifecycle testing (Case 002).</text>
+
+  <!-- Technology Badges Row -->
+  <g transform="translate(120, 365)">
+    <!-- Badge 1: SIEM -->
+    <g transform="translate(0, 0)">
+      <rect width="215" height="34" rx="8" fill="#1e3a8a" stroke="#60a5fa" stroke-width="1"/>
+      <text x="12" y="22" fill="#e0f2fe" font-size="13.5" font-family="Consolas, monospace" font-weight="700">SIEM: AWS Wazuh 4.x</text>
+    </g>
+    <!-- Badge 2: VPN Overlay -->
+    <g transform="translate(230, 0)">
+      <rect width="225" height="34" rx="8" fill="#064e3b" stroke="#34d399" stroke-width="1"/>
+      <text x="12" y="22" fill="#d1fae5" font-size="13.5" font-family="Consolas, monospace" font-weight="700">MESH: Tailscale VPN</text>
+    </g>
+    <!-- Badge 3: Target -->
+    <g transform="translate(470, 0)">
+      <rect width="245" height="34" rx="8" fill="#4338ca" stroke="#a5b4fc" stroke-width="1"/>
+      <text x="12" y="22" fill="#e0e7ff" font-size="13.5" font-family="Consolas, monospace" font-weight="700">TARGET: Ubuntu (Vultr)</text>
+    </g>
+    <!-- Badge 4: Dual Engine -->
+    <g transform="translate(730, 0)">
+      <rect width="250" height="34" rx="8" fill="#134e4a" stroke="#2dd4bf" stroke-width="1"/>
+      <text x="12" y="22" fill="#ccfbf1" font-size="13.5" font-family="Consolas, monospace" font-weight="700">ENGINE: Auditd &amp; FIM</text>
+    </g>
+    <!-- Badge 5: Detection -->
+    <g transform="translate(995, 0)">
+      <rect width="320" height="34" rx="8" fill="#0c4a6e" stroke="#38bdf8" stroke-width="1"/>
+      <text x="12" y="22" fill="#e0f2fe" font-size="13.5" font-family="Consolas, monospace" font-weight="700">RULES: PCRE2 (100100-100102)</text>
+    </g>
+    <!-- Badge 6: Linter -->
+    <g transform="translate(1330, 0)">
+      <rect width="255" height="34" rx="8" fill="#4c1d95" stroke="#c084fc" stroke-width="1"/>
+      <text x="12" y="22" fill="#f3e8ff" font-size="13.5" font-family="Consolas, monospace" font-weight="700">LINTER: Python Validator</text>
+    </g>
+  </g>
+
+  <!-- Three Main Feature Cards -->
+  <!-- Card 1: Monitored Cloud Workload -->
+  <g transform="translate(120, 440)">
+    <rect width="525" height="425" rx="14" fill="url(#cardGrad)" stroke="#1e293b" stroke-width="1.5"/>
+    <rect x="25" y="0" width="110" height="4" rx="2" fill="#38bdf8"/>
+    
+    <text x="25" y="38" fill="#38bdf8" font-size="15" font-weight="700" letter-spacing="0.5">MONITORED CLOUD ASSET</text>
+    <text x="25" y="70" fill="#ffffff" font-size="22" font-weight="700">Vultr Ubuntu Server</text>
+    <text x="25" y="100" fill="#64748b" font-size="15" font-family="Consolas, monospace">// agent: vultr-security-lab</text>
+    
+    <line x1="25" y1="125" x2="500" y2="125" stroke="#334155" stroke-width="1"/>
+    
+    <g font-size="16">
+      <text x="25" y="165" fill="#94a3b8">Target Config</text>
+      <text x="180" y="165" fill="#f1f5f9" font-family="Consolas, monospace">/etc/ssh/sshd_config</text>
+
+      <text x="25" y="215" fill="#94a3b8">Drop-In Dir</text>
+      <text x="180" y="215" fill="#f1f5f9" font-family="Consolas, monospace">sshd_config.d/*.conf</text>
+
+      <text x="25" y="265" fill="#94a3b8">Sensors Active</text>
+      <text x="180" y="265" fill="#f1f5f9">Auditd + Syscheck FIM</text>
+
+      <text x="25" y="315" fill="#94a3b8">Transit Tunnel</text>
+      <text x="180" y="315" fill="#34d399" font-weight="600">Tailscale Encrypted Mesh</text>
+
+      <text x="25" y="365" fill="#94a3b8">Hardening Base</text>
+      <text x="180" y="365" fill="#cbd5e1">SSH &amp; UFW (Documented)</text>
+
+      <text x="25" y="405" fill="#64748b" font-size="13">Point-to-point WireGuard mesh eliminates exposed inbound ports</text>
+    </g>
+  </g>
+
+  <!-- Card 2: Detection Engineering & SIEM -->
+  <g transform="translate(685, 440)">
+    <rect width="525" height="425" rx="14" fill="url(#cardGrad)" stroke="#1e293b" stroke-width="1.5"/>
+    <rect x="25" y="0" width="125" height="4" rx="2" fill="#34d399"/>
+    
+    <text x="25" y="38" fill="#34d399" font-size="15" font-weight="700" letter-spacing="0.5">DETECTION ENGINEERING</text>
+    <text x="25" y="70" fill="#ffffff" font-size="22" font-weight="700">Dedicated AWS Wazuh SIEM</text>
+    <text x="25" y="100" fill="#64748b" font-size="15" font-family="Consolas, monospace">// ruleset: local_rules.xml</text>
+    
+    <line x1="25" y1="125" x2="500" y2="125" stroke="#334155" stroke-width="1"/>
+    
+    <g font-size="16">
+      <text x="25" y="165" fill="#94a3b8">Rule 100100</text>
+      <text x="180" y="165" fill="#f1f5f9">Level 8 (SSH Modified)</text>
+      <text x="390" y="165" fill="#34d399" font-size="13" font-weight="700">[FIRED IN LAB]</text>
+
+      <text x="25" y="215" fill="#94a3b8">Rule 100101</text>
+      <text x="180" y="215" fill="#f1f5f9">Level 7 (Drop-In Added)</text>
+      <text x="390" y="215" fill="#38bdf8" font-size="13" font-weight="700">[VERIFIED]</text>
+
+      <text x="25" y="265" fill="#94a3b8">Rule 100102</text>
+      <text x="180" y="265" fill="#f1f5f9">Level 7 (Drop-In Deleted)</text>
+      <text x="390" y="265" fill="#38bdf8" font-size="13" font-weight="700">[VERIFIED]</text>
+
+      <text x="25" y="315" fill="#94a3b8">Variable Fix</text>
+      <text x="180" y="315" fill="#f1f5f9">$(file) in Alert Description</text>
+
+      <text x="25" y="365" fill="#94a3b8">Verification</text>
+      <text x="180" y="365" fill="#34d399">fim_demo.sh Lifecycle Tested</text>
+
+      <text x="25" y="405" fill="#64748b" font-size="13">Validated via Python XML linter and live drop-in harness</text>
+    </g>
+  </g>
+
+  <!-- Card 3: Dual Investigation Case Studies -->
+  <g transform="translate(1250, 440)">
+    <rect width="550" height="425" rx="14" fill="url(#cardGrad)" stroke="#1e293b" stroke-width="1.5"/>
+    <rect x="25" y="0" width="125" height="4" rx="2" fill="#c084fc"/>
+    
+    <text x="25" y="38" fill="#c084fc" font-size="15" font-weight="700" letter-spacing="0.5">CASE INVESTIGATIONS</text>
+    <text x="25" y="70" fill="#ffffff" font-size="22" font-weight="700">Evidence-Backed Cases</text>
+    <text x="25" y="100" fill="#64748b" font-size="15" font-family="Consolas, monospace">// Defensible SOC Runbooks</text>
+    
+    <line x1="25" y1="125" x2="525" y2="125" stroke="#334155" stroke-width="1"/>
+    
+    <g font-size="16">
+      <text x="25" y="165" fill="#94a3b8">Case 001</text>
+      <text x="185" y="165" fill="#f1f5f9">Auditd SSH Change Alert</text>
+      <text x="415" y="165" fill="#34d399" font-size="13" font-weight="700">[EV-01..03]</text>
+
+      <text x="25" y="215" fill="#94a3b8">Auth Failures</text>
+      <text x="185" y="215" fill="#e2e8f0">0 in Rule 100100 Scope Only</text>
+
+      <text x="25" y="265" fill="#94a3b8">Context Search</text>
+      <text x="185" y="265" fill="#f1f5f9">19 Sudo Events: T1548.003</text>
+
+      <text x="25" y="315" fill="#94a3b8">Case 002</text>
+      <text x="185" y="315" fill="#38bdf8" font-weight="600">Real-Time FIM Lifecycle</text>
+      <text x="415" y="315" fill="#38bdf8" font-size="13" font-weight="700">[DEMO-01..03]</text>
+
+      <text x="25" y="365" fill="#94a3b8">Lifecycle Test</text>
+      <text x="185" y="365" fill="#f1f5f9">Create, Modify &amp; Delete Verified</text>
+
+      <text x="25" y="405" fill="#64748b" font-size="13">Both case studies documented in docs/case-001.md &amp; docs/case-002.md</text>
+    </g>
+  </g>
+
+  <!-- Bottom Divider Line -->
+  <line x1="120" y1="920" x2="1800" y2="920" stroke="#334155" stroke-width="1"/>
+
+  <!-- Footer Information -->
+  <g transform="translate(120, 955)">
+    <text x="0" y="0" fill="#f1f5f9" font-size="16.5" font-weight="700" letter-spacing="0.5">AUTHOR: GEORGE BEAZER  |  CYBERSECURITY STUDENT SENIOR AT KSU</text>
+    <text x="0" y="25" fill="#64748b" font-size="14">Evidence-Backed Cybersecurity Portfolio | Single-Host Cloud Lab (Vultr) • Tailscale Mesh VPN • AWS Wazuh SIEM</text>
+  </g>
+
+  <g transform="translate(1800, 955)" text-anchor="end">
+    <text x="0" y="0" fill="#34d399" font-size="15" font-weight="700" letter-spacing="0.5">STATUS: LAB PILOT (AUTHENTIC TELEMETRY)</text>
+    <text x="0" y="25" fill="#94a3b8" font-size="14">All Alerts Sourced from Live In-Lab Telemetry • Zero Fabricated Screenshots</text>
+  </g>
+</svg>

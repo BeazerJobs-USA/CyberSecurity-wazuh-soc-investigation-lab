@@ -1,0 +1,99 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1100 380" width="100%" height="100%" style="background:#0b1120; font-family:'Segoe UI', -apple-system, BlinkMacSystemFont, Roboto, sans-serif;">
+  <defs>
+    <linearGradient id="pipeGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#1e293b"/>
+      <stop offset="100%" stop-color="#0f172a"/>
+    </linearGradient>
+    <marker id="pipeArrow" viewBox="0 0 10 10" refX="6" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path d="M 0 1 L 10 5 L 0 9 z" fill="#38bdf8"/>
+    </marker>
+  </defs>
+
+  <text x="550" y="38" text-anchor="middle" fill="#ffffff" font-size="20" font-weight="700">WAZUH DETECTION ENGINE LOGIC (CASE 001 &amp; CASE 002)</text>
+  <text x="550" y="62" text-anchor="middle" fill="#94a3b8" font-size="13">Parent-Child Rule Hierarchy &amp; Regex Path Filtering Architecture</text>
+
+  <!-- Left: OS File Event -->
+  <g transform="translate(40, 95)">
+    <rect width="210" height="230" rx="10" fill="url(#pipeGrad)" stroke="#0284c7" stroke-width="1.5"/>
+    <text x="105" y="30" text-anchor="middle" fill="#38bdf8" font-size="14" font-weight="700">1. OS Telemetry (Vultr)</text>
+    <rect x="15" y="50" width="180" height="75" rx="6" fill="#0f172a" stroke="#1e293b"/>
+    <text x="105" y="75" text-anchor="middle" fill="#f8fafc" font-size="11" font-weight="600">Filesystem Trigger</text>
+    <text x="105" y="95" text-anchor="middle" fill="#38bdf8" font-family="Consolas, monospace" font-size="10">/etc/ssh/sshd_config</text>
+    <text x="105" y="112" text-anchor="middle" fill="#38bdf8" font-family="Consolas, monospace" font-size="10">sshd_config.d/*.conf</text>
+
+    <rect x="15" y="135" width="180" height="75" rx="6" fill="#0f172a" stroke="#10b981" stroke-width="1"/>
+    <text x="105" y="157" text-anchor="middle" fill="#34d399" font-size="11" font-weight="700">Dual Engine Pipeline</text>
+    <text x="105" y="175" text-anchor="middle" fill="#cbd5e1" font-size="10.5">Auditd Watcher (Case 001)</text>
+    <text x="105" y="195" text-anchor="middle" fill="#cbd5e1" font-size="10.5">Inotify Syscheck (Case 002)</text>
+  </g>
+
+  <!-- Arrow 1 -> 2 -->
+  <line x1="250" y1="210" x2="310" y2="210" stroke="#38bdf8" stroke-width="2" marker-end="url(#pipeArrow)"/>
+
+  <!-- Center-Left: Built-in FIM Parents -->
+  <g transform="translate(320, 95)">
+    <rect width="230" height="230" rx="10" fill="url(#pipeGrad)" stroke="#0284c7" stroke-width="1.5"/>
+    <text x="115" y="30" text-anchor="middle" fill="#38bdf8" font-size="14" font-weight="700">2. Built-in Parent Rules</text>
+
+    <rect x="15" y="50" width="200" height="50" rx="6" fill="#0f172a" stroke="#10b981" stroke-width="1.2"/>
+    <text x="25" y="72" fill="#34d399" font-family="Consolas, monospace" font-size="12" font-weight="700">Rule 550</text>
+    <text x="105" y="72" fill="#f8fafc" font-size="11">Checksum Modified</text>
+    <text x="25" y="90" fill="#6ee7b7" font-size="9" font-weight="600">[Observed in Case 001/002]</text>
+
+    <rect x="15" y="110" width="200" height="50" rx="6" fill="#0f172a" stroke="#38bdf8" stroke-width="1"/>
+    <text x="25" y="132" fill="#38bdf8" font-family="Consolas, monospace" font-size="12" font-weight="700">Rule 554</text>
+    <text x="105" y="132" fill="#cbd5e1" font-size="11">File Added</text>
+    <text x="25" y="150" fill="#7dd3fc" font-size="9" font-weight="600">[Verified in Case 002]</text>
+
+    <rect x="15" y="170" width="200" height="45" rx="6" fill="#0f172a" stroke="#38bdf8" stroke-width="1"/>
+    <text x="25" y="192" fill="#38bdf8" font-family="Consolas, monospace" font-size="12" font-weight="700">Rule 553</text>
+    <text x="105" y="192" fill="#cbd5e1" font-size="11">File Deleted</text>
+    <text x="25" y="206" fill="#7dd3fc" font-size="9" font-weight="600">[Verified in Case 002]</text>
+  </g>
+
+  <!-- Arrow 2 -> 3 -->
+  <line x1="550" y1="210" x2="610" y2="210" stroke="#38bdf8" stroke-width="2" marker-end="url(#pipeArrow)"/>
+
+  <!-- Center-Right: Custom Detection Child Rules -->
+  <g transform="translate(620, 95)">
+    <rect width="250" height="230" rx="10" fill="url(#pipeGrad)" stroke="#10b981" stroke-width="1.5"/>
+    <text x="125" y="30" text-anchor="middle" fill="#34d399" font-size="14" font-weight="700">3. Custom Child Rules</text>
+
+    <rect x="15" y="45" width="220" height="30" rx="4" fill="#0f172a"/>
+    <text x="125" y="65" text-anchor="middle" fill="#38bdf8" font-family="Consolas, monospace" font-size="9">^/etc/ssh/sshd_config($|\.d/.*)</text>
+
+    <rect x="15" y="85" width="220" height="42" rx="6" fill="#1e293b" stroke="#10b981" stroke-width="1"/>
+    <text x="25" y="105" fill="#34d399" font-family="Consolas, monospace" font-size="11" font-weight="700">Rule 100100</text>
+    <text x="110" y="105" fill="#ffffff" font-size="11">Level 8 (Modified)</text>
+    <text x="25" y="120" fill="#6ee7b7" font-size="9">v1 Fired 01:48:49 &#x2022; v2 $(file) verified</text>
+
+    <rect x="15" y="133" width="220" height="38" rx="6" fill="#1e293b" stroke="#38bdf8" stroke-width="1"/>
+    <text x="25" y="152" fill="#38bdf8" font-family="Consolas, monospace" font-size="11" font-weight="700">Rule 100101</text>
+    <text x="110" y="152" fill="#cbd5e1" font-size="11">Level 7 (Added)</text>
+    <text x="25" y="165" fill="#7dd3fc" font-size="9">Verified via fim_demo.sh</text>
+
+    <rect x="15" y="177" width="220" height="38" rx="6" fill="#1e293b" stroke="#38bdf8" stroke-width="1"/>
+    <text x="25" y="196" fill="#38bdf8" font-family="Consolas, monospace" font-size="11" font-weight="700">Rule 100102</text>
+    <text x="110" y="196" fill="#cbd5e1" font-size="11">Level 7 (Deleted)</text>
+    <text x="25" y="209" fill="#7dd3fc" font-size="9">Verified via fim_demo.sh</text>
+  </g>
+
+  <!-- Arrow 3 -> 4 -->
+  <line x1="870" y1="210" x2="920" y2="210" stroke="#38bdf8" stroke-width="2" marker-end="url(#pipeArrow)"/>
+
+  <!-- Right: Dispatch & Triage -->
+  <g transform="translate(930, 95)">
+    <rect width="130" height="230" rx="10" fill="url(#pipeGrad)" stroke="#38bdf8" stroke-width="1.5"/>
+    <text x="65" y="30" text-anchor="middle" fill="#38bdf8" font-size="13" font-weight="700">4. Triage</text>
+    
+    <rect x="10" y="50" width="110" height="75" rx="6" fill="#0f172a" stroke="#1e293b"/>
+    <text x="65" y="75" text-anchor="middle" fill="#f8fafc" font-size="10" font-weight="600">Case 001</text>
+    <text x="65" y="95" text-anchor="middle" fill="#38bdf8" font-size="18" font-weight="700">1 Hit</text>
+    <text x="65" y="112" text-anchor="middle" fill="#64748b" font-size="9">Auditd Mod</text>
+
+    <rect x="10" y="135" width="110" height="75" rx="6" fill="#0f172a" stroke="#1e293b"/>
+    <text x="65" y="160" text-anchor="middle" fill="#f8fafc" font-size="10" font-weight="600">Case 002</text>
+    <text x="65" y="180" text-anchor="middle" fill="#34d399" font-size="16" font-weight="700">Lifecycle</text>
+    <text x="65" y="198" text-anchor="middle" fill="#64748b" font-size="9">Add/Mod/Del</text>
+  </g>
+</svg>

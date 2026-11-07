@@ -1,0 +1,25 @@
+<!--
+  Wazuh agent FIM entries for the Ubuntu endpoint.
+
+  Add the two <directories> lines inside the EXISTING <syscheck> block of
+  /var/ossec/etc/ossec.conf. Do not add a second <syscheck> block.
+  Restart the agent afterwards:  sudo systemctl restart wazuh-agent
+
+  report_changes="yes" stores a text diff so the alert shows what changed.
+  realtime="yes" reports the change within seconds instead of waiting for the
+  next scheduled scan.
+-->
+<syscheck>
+  <directories check_all="yes" report_changes="yes" realtime="yes">/etc/ssh/sshd_config</directories>
+  <directories check_all="yes" report_changes="yes" realtime="yes">/etc/ssh/sshd_config.d</directories>
+</syscheck>
+
+<!--
+  NOT DEPLOYED. Planned upgrade (see docs/roadmap.md): who-data mode adds the
+  acting user and process (audit.login_user.name, audit.process.name) to the
+  alert. It needs auditd installed and running on the endpoint. Real-time mode
+  alone tells you which file changed and when, not who changed it.
+
+  <directories check_all="yes" report_changes="yes" whodata="yes">/etc/ssh/sshd_config</directories>
+  <directories check_all="yes" report_changes="yes" whodata="yes">/etc/ssh/sshd_config.d</directories>
+-->
