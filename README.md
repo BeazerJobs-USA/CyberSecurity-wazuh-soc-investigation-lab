@@ -28,7 +28,7 @@
 ---
 
 <a id="project-overview"></a>
-## Project Overview
+## 🛡️ Project Overview
 
 This repository documents a hands on SOC lab built to practice **detection engineering, Linux security monitoring, alert triage, host log correlation, and evidence based incident analysis**.
 
@@ -46,7 +46,7 @@ The portfolio intentionally separates four evidence states:
 > [!IMPORTANT]
 > This is a student cybersecurity lab, not a production SOC. The goal is to show sound technical reasoning and reproducible evidence without overstating what the artifacts prove.
 
-### Current evidence backed highlights
+### ✨ Current Evidence Backed Highlights
 
 * Custom Rule **100100** produced a Level 8 Wazuh FIM alert for an OpenSSH configuration change.
 * Review of that alert exposed a real description variable problem in the earlier rule version, leading to a revised `$(file)` based rule design.
@@ -58,7 +58,7 @@ The portfolio intentionally separates four evidence states:
 
 ---
 
-## Lab at a Glance
+## 🧭 Lab at a Glance
 
 | Layer | Component | Current evidence state |
 |:---|:---|:---:|
@@ -78,7 +78,7 @@ The portfolio intentionally separates four evidence states:
 ---
 
 <a id="lab-architecture"></a>
-## Lab Architecture
+## 🏗️ Lab Architecture
 
 <div align="center">
   <a href="assets/architecture/lab-architecture.svg">
@@ -88,7 +88,7 @@ The portfolio intentionally separates four evidence states:
   <sub><i>Existing portfolio architecture graphic retained. Where a graphic and current evidence state differ, the written evidence status in this README is authoritative.</i></sub>
 </div>
 
-### Operational flow
+### 🔗 Operational Flow
 
 ```text
 Vultr Ubuntu Endpoint
@@ -110,9 +110,9 @@ The current service snapshot shows Tailscale, Wazuh agent, SSH, Fail2Ban, and au
 ---
 
 <a id="investigation-cases"></a>
-## Investigation Cases
+## 🔎 Investigation Cases
 
-### Case 001: Wazuh FIM SSH Configuration Change
+### 🔐 Case 001: Wazuh FIM SSH Configuration Change
 
 **Status: OBSERVED ALERT, FINAL DISPOSITION PENDING**
 
@@ -134,7 +134,7 @@ What it does not yet prove:
 
 [Read the full Case 001 investigation](docs/case-001-ssh-config-change.md)
 
-### Case 002: Safe FIM Lifecycle Test
+### 🧪 Case 002: Safe FIM Lifecycle Test
 
 **Status: TEST EXECUTED, ALERT VERIFICATION PENDING**
 
@@ -144,7 +144,7 @@ The timeline **does not** contain Wazuh alert records for Rules 100101 and 10010
 
 [Read Case 002 and its definition of done](docs/case-002-fim-lifecycle.md)
 
-### Case 003: SSH Authentication Attack Investigation
+### 🚨 Case 003: SSH Authentication Attack Investigation
 
 **Status: OBSERVED**
 
@@ -163,7 +163,7 @@ November 2026 captures show genuine unsolicited SSH authentication activity agai
 ---
 
 <a id="custom-detection-rules"></a>
-## Custom Detection Rules
+## ⚙️ Custom Detection Rules
 
 `detections/local_rules.xml` contains three custom child rules scoped to OpenSSH configuration paths:
 
@@ -191,7 +191,7 @@ November 2026 captures show genuine unsolicited SSH authentication activity agai
 </group>
 ```
 
-### Rule verification status
+### ✅ Rule Verification Status
 
 | Rule | Purpose | Status |
 |:---:|:---|:---:|
@@ -206,7 +206,7 @@ python3 scripts/lint_rules.py detections/local_rules.xml
 sudo /var/ossec/bin/wazuh-analysisd -t
 ```
 
-### Corrected real time FIM reference
+### 🧩 Corrected Real Time FIM Reference
 
 Wazuh real time monitoring is directory based. The repository reference monitors the OpenSSH directory and uses the custom rule regex to narrow the custom alert paths:
 
@@ -218,7 +218,7 @@ See [detections/ossec_fim_snippet.xml](detections/ossec_fim_snippet.xml).
 
 ---
 
-## Investigation Workflow
+## 🔁 Investigation Workflow
 
 <div align="center">
   <a href="assets/diagrams/investigation-workflow.svg">
@@ -243,9 +243,9 @@ Alert or event
 ---
 
 <a id="evidence-and-verification"></a>
-## Evidence and Verification
+## 🧾 Evidence and Verification
 
-### Existing Case 001 evidence
+### 📸 Existing Case 001 Evidence
 
 <div align="center">
   <img src="evidence/observed/01_rule100100_events_view.png" alt="Rule 100100 events view" width="95%"/>
@@ -265,7 +265,7 @@ Alert or event
 
 **What it proves:** the search returned 19 Level 3 events with Wazuh's sudo related ATT&CK classification. The ATT&CK tag alone does not establish that every event was authorized or benign.
 
-### New authentication evidence
+### 🚨 New Authentication Evidence
 
 The November captures supplied for this revision document endpoint state, sudo activity, Rule 5710 invalid user events, Rule 5712 brute force correlation, host authentication logs, and Fail2Ban response.
 
@@ -277,7 +277,7 @@ The November captures supplied for this revision document endpoint state, sudo a
 ---
 
 <a id="implementation-status"></a>
-## Implementation Status
+## 📊 Implementation Status
 
 | Capability | Status | Evidence based interpretation |
 |:---|:---:|:---|
@@ -298,7 +298,7 @@ The November captures supplied for this revision document endpoint state, sudo a
 ---
 
 <a id="roadmap"></a>
-## Roadmap
+## 🚀 Roadmap
 
 Highest priority next steps:
 
@@ -314,7 +314,7 @@ Highest priority next steps:
 
 ---
 
-## Repository Navigation
+## 🗂️ Repository Navigation
 
 ```text
 assets/
@@ -350,7 +350,7 @@ scripts/
 
 ---
 
-## Technical References
+## 📚 Technical References
 
 * [Wazuh File Integrity Monitoring](https://documentation.wazuh.com/current/user-manual/capabilities/file-integrity/index.html)
 * [Wazuh custom FIM rules](https://documentation.wazuh.com/current/user-manual/capabilities/file-integrity/creating-custom-fim-rules.html)
