@@ -1,412 +1,363 @@
 <div align="center">
 
 # Enterprise SOC Investigation Lab
-### Hybrid Cloud Threat Detection, Linux Auditd & Real-Time FIM Pipeline
+### Hybrid Cloud Detection, Linux FIM, SSH Attack Telemetry and Response
 
-[![Wazuh SIEM](https://img.shields.io/badge/SIEM%2FEDR-AWS%20Wazuh%20v4.x-0284c7?style=for-the-badge&logo=wazuh&logoColor=white)](https://wazuh.com/)
-[![Mesh VPN](https://img.shields.io/badge/Tunnel-Tailscale%20Mesh%20VPN-10b981?style=for-the-badge&logo=wireguard&logoColor=white)](https://wireguard.com/)
-[![Ubuntu Cloud](https://img.shields.io/badge/Workload-Vultr%20Ubuntu%2022.04-e95420?style=for-the-badge&logo=ubuntu&logoColor=white)](https://ubuntu.com/)
-[![OpenSSH](https://img.shields.io/badge/Hardening-OpenSSH%20Baseline-232f3e?style=for-the-badge&logo=ssh&logoColor=white)](hardening/sshd_hardening_reference.conf)
-[![Firewall](https://img.shields.io/badge/Firewall-UFW%20Reference-10b981?style=for-the-badge&logo=linux&logoColor=white)](hardening/ufw_reference.md)
-[![Detection Engine](https://img.shields.io/badge/Ruleset-PCRE2%20Custom%20FIM-8b5cf6?style=for-the-badge)](detections/local_rules.xml)
+[![Wazuh SIEM](https://img.shields.io/badge/SIEM%2FEDR-Wazuh%204.x-0284c7?style=for-the-badge&logo=wazuh&logoColor=white)](https://wazuh.com/)
+[![Mesh VPN](https://img.shields.io/badge/Overlay-Tailscale-10b981?style=for-the-badge&logo=tailscale&logoColor=white)](https://tailscale.com/)
+[![Ubuntu Cloud](https://img.shields.io/badge/Endpoint-Ubuntu%20Cloud-e95420?style=for-the-badge&logo=ubuntu&logoColor=white)](https://ubuntu.com/)
+[![OpenSSH](https://img.shields.io/badge/Service-OpenSSH-232f3e?style=for-the-badge&logo=ssh&logoColor=white)](hardening/sshd_hardening_reference.conf)
+[![Firewall](https://img.shields.io/badge/Firewall-UFW-10b981?style=for-the-badge&logo=linux&logoColor=white)](hardening/ufw_reference.md)
+[![Detection Engine](https://img.shields.io/badge/Detection-Custom%20FIM%20Rules-8b5cf6?style=for-the-badge)](detections/local_rules.xml)
 
 <br/>
 
 <a href="assets/project-cover.svg">
   <img src="assets/project-cover.png" alt="Enterprise SOC Investigation Lab Cover" width="100%"/>
 </a>
-<sub><i>Click banner to view editable vector source (<a href="assets/project-cover.svg">project-cover.svg</a>)</i></sub>
+<sub><i>Presentation graphics retained from the portfolio design work. Technical claims below are tied to documented evidence states.</i></sub>
 
-<br/>
-<br/>
+<br/><br/>
 
-**Author:** **George Beazer** &nbsp;|&nbsp; **Role:** Cybersecurity Student Senior at KSU &nbsp;|&nbsp; **Environment:** Cloud-Hosted SOC Investigation Lab (Vultr • Tailscale • AWS Wazuh SIEM)
+**Author:** **George Beazer** &nbsp;|&nbsp; **Role:** Cybersecurity Student, Senior at KSU &nbsp;|&nbsp; **Environment:** Cloud hosted SOC investigation lab
 
-[Overview](#project-overview) • [Lab at a Glance](#lab-at-a-glance) • [Architecture](#lab-architecture) • [Core Configurations](#core-configurations) • [Investigation Workflow](#investigation-workflow) • [Case Studies](#case-studies) • [Evidence Gallery](#evidence-gallery) • [Implementation Status](#implementation-status) • [Roadmap](#roadmap) • [Docs Navigation](#documentation-navigation)
+[Overview](#project-overview) • [Architecture](#lab-architecture) • [Cases](#investigation-cases) • [Evidence](#evidence-and-verification) • [Rules](#custom-detection-rules) • [Status](#implementation-status) • [Roadmap](#roadmap)
 
 </div>
 
 ---
 
 <a id="project-overview"></a>
-## 📌 Project Overview
+## Project Overview
 
-The **Enterprise SOC Investigation Lab** is a hands-on cybersecurity detection and incident response environment built across cloud infrastructure. The lab demonstrates practical detection engineering, host hardening, and security operations fundamentals: deploying an open-source SIEM/EDR architecture, establishing secure point-to-point telemetry transport over **Tailscale Mesh VPN**, engineering custom **PCRE2 detection rules**, and executing structured analyst triage across verified security alerts.
+This repository documents a hands on SOC lab built to practice **detection engineering, Linux security monitoring, alert triage, host log correlation, and evidence based incident analysis**.
 
-The lab documents two distinct, evidence-backed investigation cases:
-1. **Case 001: Auditd-Based SSH Configuration Change Detection** — Analyzes an observed alert triggered when `/etc/ssh/sshd_config` was modified on the Vultr cloud host (`vultr-security-lab`). Covers alert discovery in Wazuh Threat Hunting, rule description debugging (`$(file)` variable fix), 24-hour sudo context triage (MITRE T1548.003), and host-level verification requirements.
-2. **Case 002: Real-Time FIM Lifecycle Detection** — Demonstrates end-to-end File Integrity Monitoring lifecycle verification using automated drop-in test harness [`scripts/fim_demo.sh`](scripts/fim_demo.sh). Validates real-time detection of drop-in file creation (Rule 100101), modification with text differential capture (Rule 100100), and deletion (Rule 100102) under `/etc/ssh/sshd_config.d/`.
+The current lab includes a Vultr Ubuntu endpoint named `vultr-security-lab`, a Wazuh manager/dashboard in the cloud lab topology, a Tailscale overlay, Wazuh File Integrity Monitoring, custom rules for OpenSSH configuration changes, UFW, Fail2Ban, auditd, and live SSH authentication telemetry.
 
-> [!NOTE]
-> **Scope & Environment Transparency:**
-> This repository documents a hands-on cybersecurity lab comprising a monitored Ubuntu Linux workload on Vultr connected over Tailscale VPN to a dedicated Wazuh SIEM on AWS EC2. All documented capabilities are verified from authentic lab testing. Implemented features are strictly distinguished from planned roadmap milestones (Windows + Sysmon, Microsoft Sentinel, Defender XDR, and KQL hunting).
+The portfolio intentionally separates four evidence states:
+
+| State | Meaning |
+|:---|:---|
+| **Observed** | Direct telemetry or terminal output was captured from the running lab |
+| **Implemented** | Configuration or code exists, but every runtime result is not necessarily captured |
+| **Test Executed** | A controlled action was performed, but its expected alert still needs direct Wazuh evidence |
+| **Planned** | Future work that is not represented as completed |
+
+> [!IMPORTANT]
+> This is a student cybersecurity lab, not a production SOC. The goal is to show sound technical reasoning and reproducible evidence without overstating what the artifacts prove.
+
+### Current evidence backed highlights
+
+* Custom Rule **100100** produced a Level 8 Wazuh FIM alert for an OpenSSH configuration change.
+* Review of that alert exposed a real description variable problem in the earlier rule version, leading to a revised `$(file)` based rule design.
+* Wazuh default SSH Rule **5710** captured repeated attempts using non existent usernames.
+* Wazuh Rule **5712** produced correlated brute force alerts against non existent users.
+* Host logs show unsolicited public SSH authentication attempts alongside a known administrative public key login over the private management path.
+* Fail2Ban is active and has applied repeated SSH bans.
+* UFW is active with default deny incoming, but TCP/22 is currently allowed from Anywhere. The repository documents this exposure rather than presenting the firewall as more restrictive than it is.
 
 ---
 
-<a id="lab-at-a-glance"></a>
-## ⚡ Lab at a Glance
+## Lab at a Glance
 
-### Hybrid Cloud Infrastructure & Technology Stack
-
-| Layer | Component | Technology / Implementation | Role in Environment | Status |
-|:---|:---|:---|:---|:---:|
-| **Cloud Workload** | Monitored Host | **Ubuntu 22.04 LTS** (Vultr Cloud) | Workload running OpenSSH service, auditd, and Wazuh agent (`vultr-security-lab`) | **VERIFIED** |
-| **Network Mesh** | Telemetry Transport | **Tailscale Encrypted Mesh VPN** | WireGuard-based point-to-point overlay securing cross-cloud agent telemetry | **VERIFIED** |
-| **SIEM Platform** | SIEM / EDR Server | **AWS EC2** (Wazuh Manager 4.x) | Central analysisd engine, decoder processing, and custom PCRE2 ruleset | **VERIFIED** |
-| **SOC Interface** | Threat Hunting | **Wazuh Dashboard** | Multi-dimensional search, event analysis, and metric visualization | **VERIFIED** |
-| **Host Sensors** | Subsystem Telemetry | **Linux auditd & Wazuh syscheck** | Kernel audit event monitoring and real-time inotify filesystem tracking | **VERIFIED** |
-| **Detection Engine** | Custom Ruleset | **PCRE2 Custom Rules (100100–100102)** | Evaluates file modifications, additions, and deletions in `/etc/ssh/` | **VERIFIED** |
-| **Rule QA** | Static Validator | **Python XML Rule Linter** | Validates XML schema, rule IDs, and variable syntax prior to reload | **IMPLEMENTED** |
-| **Host Defense** | SSH Configuration | **OpenSSH Hardening Baseline** | Pubkey-only access, root login disabled, retry limits (Documented) | **PENDING VERIFICATION** |
-| **Host Perimeter** | Firewall | **UFW (Uncomplicated Firewall)** | Default-deny incoming, restricted port 22 access (Documented) | **PENDING VERIFICATION** |
+| Layer | Component | Current evidence state |
+|:---|:---|:---:|
+| Endpoint | `vultr-security-lab`, current capture shows Ubuntu 26.04.1 LTS and Wazuh agent 4.14.8 | **Observed** |
+| SIEM | Wazuh Threat Hunting and endpoint telemetry | **Observed** |
+| Private overlay | Tailscale service and lab peers | **Observed** |
+| FIM | Wazuh syscheck/FIM for OpenSSH configuration monitoring | **Observed / being refined** |
+| Custom detection | Rules 100100 through 100102 | **100100 observed; 100101 and 100102 pending alert capture** |
+| Authentication detection | Rules 5710, 5712, 5715 and sudo Rule 5402 | **Observed** |
+| Host firewall | UFW active, default deny incoming, public SSH exception present | **Observed** |
+| Reactive defense | Fail2Ban `sshd` jail active | **Observed** |
+| Audit subsystem | auditd service active | **Observed; not claimed as the source of Case 001** |
+| Rule QA | Python repository linter | **Implemented** |
+| Native rule loader test | `wazuh-analysisd -t` | **Pending evidence** |
+| SSH effective hardening | `sshd -t` and `sshd -T` evidence | **Pending evidence** |
 
 ---
 
 <a id="lab-architecture"></a>
-## 🏗️ Lab Architecture
-
-The lab connects a monitored Vultr Linux endpoint to a dedicated AWS Wazuh SIEM through a private Tailscale overlay network. Kernel auditd watchers and real-time inotify monitors capture security events on the host, forward encrypted telemetry over Tailscale, evaluate custom parent-child rule logic on the AWS manager, and present structured alerts for SOC investigation.
+## Lab Architecture
 
 <div align="center">
   <a href="assets/architecture/lab-architecture.svg">
     <img src="assets/architecture/lab-architecture.png" alt="SOC Investigation Lab Architecture" width="100%"/>
   </a>
   <br/>
-  <sub><i>Master architecture diagram (<a href="assets/architecture/lab-architecture.svg">View editable SVG</a>)</i></sub>
+  <sub><i>Existing portfolio architecture graphic retained. Where a graphic and current evidence state differ, the written evidence status in this README is authoritative.</i></sub>
 </div>
 
-### Hybrid Cloud Telemetry Flow
+### Operational flow
 
 ```text
-┌──────────────────────────────────────┐        ┌───────────────────────────────┐        ┌──────────────────────────────────────┐
-│ 1. Monitored Host (Vultr Cloud)      │        │ 2. Encrypted Network Overlay  │        │ 3. Dedicated SIEM (AWS EC2 Instance) │
-│    Ubuntu 22.04 LTS (Security Lab)   │        │    Tailscale Mesh VPN         │        │    Wazuh Manager 4.x (Analysisd)     │
-│    • Linux auditd (Kernel Audit)     │ ──────>│    • WireGuard Point-to-Point │ ──────>│    • Custom Rules (local_rules.xml)  │
-│    • syscheck (Inotify Real-Time FIM)│        │    • Zero Open Inbound Ports  │        │    • Rule 100100 (Level 8: Modified) │
-│    • Target: /etc/ssh/sshd_config    │        │    • Private 100.x.x.x Mesh   │        │    • Rule 100101 (Level 7: Added)    │
-│    • Target: sshd_config.d/*.conf    │        │    • Cross-Cloud Transit      │        │    • Rule 100102 (Level 7: Deleted)  │
-└──────────────────────────────────────┘        └───────────────────────────────┘        └──────────────────────────────────────┘
-                                                                                                    │
-                                                                                                    ▼
-┌────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┐
-│ 4. SOC Threat Hunting Dashboard & Investigation Cases                                                                  │
-│    • Case 001: Auditd SSH Change Alert (Observed Alert 14 Oct 2026, 01:48:49 @ Level 8, EV-01..03)                     │
-│    • Case 002: Real-Time FIM Lifecycle Verification (Create 100101, Modify 100100, Delete 100102 via fim_demo.sh)     │
-│    • Threat Triage: 0 auth failures (rule 100100 filter) | 19 Level 3 Sudo events (MITRE T1548.003)                   │
-└────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┘
+Vultr Ubuntu Endpoint
+  |
+  | Wazuh agent, FIM, SSH/auth telemetry
+  v
+Cloud Wazuh Manager and Threat Hunting
+  |
+  +--> Custom OpenSSH configuration rules
+  +--> Default SSH authentication rules
+  +--> Analyst triage and evidence correlation
+
+Supporting endpoint controls:
+  Tailscale overlay | UFW | Fail2Ban | auditd | OpenSSH
 ```
+
+The current service snapshot shows Tailscale, Wazuh agent, SSH, Fail2Ban, and auditd active. UFW is also active. The exact live Wazuh destination/transport settings should be verified from the deployed agent configuration before treating a topology diagram as packet level proof.
 
 ---
 
-<a id="core-configurations"></a>
-## ⚙️ Core Configurations
+<a id="investigation-cases"></a>
+## Investigation Cases
 
-### 1. File Integrity Monitoring (FIM)
-Configured within `/var/ossec/etc/ossec.conf` on the monitored host:
-```xml
-<!-- File Integrity Monitoring for OpenSSH Server Configuration -->
-<directories check_all="yes" report_changes="yes" realtime="yes">/etc/ssh/sshd_config</directories>
-<directories check_all="yes" report_changes="yes" realtime="yes">/etc/ssh/sshd_config.d</directories>
-```
-- `realtime="yes"`: Leverages Linux `inotify` watchers for immediate event generation upon file modification.
-- `report_changes="yes"`: Records unified textual diffs for text files under 32KB.
-- Both `/etc/ssh/sshd_config` and `/etc/ssh/sshd_config.d/` are monitored to defend against **first-value-wins** drop-in file overrides.
+### Case 001: Wazuh FIM SSH Configuration Change
 
-### 2. Custom Detection Rules (`local_rules.xml`)
-Authored and tested for `/var/ossec/etc/rules/local_rules.xml` on the Wazuh Manager:
+**Status: OBSERVED ALERT, FINAL DISPOSITION PENDING**
+
+Custom Rule 100100 fired once at Level 8 on 14 Oct 2026 at 01:48:49 in the captured dashboard view.
+
+What the evidence proves:
+
+* Rule 100100 fired for `vultr-security-lab`.
+* The historical alert description contained a blank trailing value, exposing a rule template issue.
+* The filtered dashboard contained one Rule 100100 alert.
+
+What it does not yet prove:
+
+* which exact directive changed,
+* who made the change,
+* whether it was authorized,
+* whether `syscheck.diff` was present,
+* whether the revised `$(file)` description has been observed after deployment.
+
+[Read the full Case 001 investigation](docs/case-001-ssh-config-change.md)
+
+### Case 002: Safe FIM Lifecycle Test
+
+**Status: TEST EXECUTED, ALERT VERIFICATION PENDING**
+
+The safe test harness creates, modifies, and deletes a comment only file under `/etc/ssh/sshd_config.d/`. The timeline records those filesystem actions and the rule IDs expected to fire.
+
+The timeline **does not** contain Wazuh alert records for Rules 100101 and 100102. This case will be promoted to verified only after direct alert captures and native manager validation are added.
+
+[Read Case 002 and its definition of done](docs/case-002-fim-lifecycle.md)
+
+### Case 003: SSH Authentication Attack Investigation
+
+**Status: OBSERVED**
+
+November 2026 captures show genuine unsolicited SSH authentication activity against the public SSH service:
+
+* Rule 5710 shows repeated attempts to log in with non existent users.
+* Rule 5712 shows Wazuh correlated brute force activity.
+* Raw host authentication logs show multiple public source attempts and a separate known administrative public key login.
+* Fail2Ban's `sshd` jail is active and has accumulated repeated bans.
+* UFW is active, but public TCP/22 remains explicitly allowed.
+
+**Assessment:** the host is receiving real internet SSH credential probing. The supplied artifacts do not prove successful unauthorized access or compromise.
+
+[Read the Case 003 investigation](docs/case-003-ssh-authentication-attacks.md)
+
+---
+
+<a id="custom-detection-rules"></a>
+## Custom Detection Rules
+
+`detections/local_rules.xml` contains three custom child rules scoped to OpenSSH configuration paths:
+
 ```xml
 <group name="syscheck,ssh_configuration_monitoring,">
 
-  <!-- Rule 100100: SSH configuration modification (Observed Firing in Lab) -->
   <rule id="100100" level="8">
     <if_sid>550</if_sid>
     <field name="file" type="pcre2">^/etc/ssh/sshd_config($|\.d/.*)</field>
     <description>SSH configuration file modified: $(file)</description>
-    <group>ssh_config_change,configuration_change,</group>
   </rule>
 
-  <!-- Rule 100101: SSH configuration file added -->
   <rule id="100101" level="7">
     <if_sid>554</if_sid>
     <field name="file" type="pcre2">^/etc/ssh/sshd_config($|\.d/.*)</field>
     <description>SSH configuration file added: $(file)</description>
-    <group>ssh_config_change,configuration_change,</group>
   </rule>
 
-  <!-- Rule 100102: SSH configuration file deleted -->
   <rule id="100102" level="7">
     <if_sid>553</if_sid>
     <field name="file" type="pcre2">^/etc/ssh/sshd_config($|\.d/.*)</field>
     <description>SSH configuration file deleted: $(file)</description>
-    <group>ssh_config_change,configuration_change,</group>
   </rule>
 
 </group>
 ```
 
-> **Ruleset Status:** Custom detection rules tested and verified. Rule 100100 fired during initial lab operations (Case 001). The complete ruleset v2 was verified through real-time lifecycle testing (Case 002), confirming that `$(file)` correctly renders target paths upon file creation, modification, and deletion.
+### Rule verification status
 
-### 3. XML Rule Linter Script (`scripts/lint_rules.py`)
-A custom Python utility developed to validate XML structure, rule ID ranges (`100000`–`120000`), parent rule references, and description variables prior to reloading the manager:
+| Rule | Purpose | Status |
+|:---:|:---|:---:|
+| 100100 | OpenSSH configuration modified | **Observed under earlier rule version; v2 description needs live capture** |
+| 100101 | OpenSSH configuration file added | **Authored; alert capture pending** |
+| 100102 | OpenSSH configuration file deleted | **Authored; alert capture pending** |
+
+The Python linter checks repository structure and common mistakes. It is **not** an XML schema validator and it does not replace the manager's native validation:
+
 ```bash
 python3 scripts/lint_rules.py detections/local_rules.xml
+sudo /var/ossec/bin/wazuh-analysisd -t
 ```
 
-### 4. Automated Safe FIM Test Harness (`scripts/fim_demo.sh`)
-An automated bash test harness designed to safely exercise the FIM detection pipeline without disrupting active OpenSSH daemon configuration:
-```bash
-sudo bash scripts/fim_demo.sh           # Creates, modifies, and deletes 99-fim-demo.conf
-sudo bash scripts/fim_demo.sh --cleanup # Ensures host returns to pristine state
+### Corrected real time FIM reference
+
+Wazuh real time monitoring is directory based. The repository reference monitors the OpenSSH directory and uses the custom rule regex to narrow the custom alert paths:
+
+```xml
+<directories check_all="yes" report_changes="yes" realtime="yes">/etc/ssh</directories>
 ```
+
+See [detections/ossec_fim_snippet.xml](detections/ossec_fim_snippet.xml).
 
 ---
 
-<a id="investigation-workflow"></a>
-## 🔄 Investigation Workflow
-
-The standard operational procedure for triaging file integrity and configuration alteration alerts:
+## Investigation Workflow
 
 <div align="center">
   <a href="assets/diagrams/investigation-workflow.svg">
     <img src="assets/diagrams/investigation-workflow.png" alt="SOC Incident Investigation Lifecycle" width="100%"/>
   </a>
-  <br/>
-  <sub><i>Standard Operating Procedure (<a href="assets/diagrams/investigation-workflow.svg">View editable SVG</a>)</i></sub>
 </div>
 
-```
-[1. Detection Trigger]       Auditd / FIM watcher triggers event on Vultr endpoint
-        │
-[2. Encrypted Transport]     Telemetry securely relayed over Tailscale Mesh VPN to AWS
-        │
-[3. SIEM Evaluation]         Wazuh Manager matches Rule 100100 (Level 8) / Rules 100101-102 (Level 7)
-        │
-[4. Dashboard Triage]        Threat Hunting check: event count (1 hit), time window, 24h context
-        │
-[5. Host Verification]       Run 'sshd -t' (syntax) and 'sshd -T' (effective runtime posture)
-        │
-[6. Actor Correlation]       Query /var/log/auth.log for sudo commands and concurrent logins
-        │
-[7. Incident Disposition]    Determine if change was expected admin maintenance vs unauthorized tampering
-```
+The working analyst sequence is:
 
-Detailed runbook procedures are documented in [`docs/investigation-workflow.md`](docs/investigation-workflow.md).
-
----
-
-<a id="case-studies"></a>
-## 🔍 Investigation Case Studies
-
-### Case 001: Auditd-Based SSH Configuration Change Detection
-
-| Parameter | Operational Detail | Evidence Basis |
-|:---|:---|:---|
-| **Incident Title** | Auditd Alert: OpenSSH Server Configuration Modification Detected | Verified In-Lab Capture |
-| **Detection Timestamp** | **14 Oct 2026, 01:48:49** (Dashboard Local Time) | `01_rule100100_events_view.png` |
-| **Alerting Rule** | Rule `100100` (Level 8) — Parent Rule `550` / Auditd Subsystem | `02_rule100100_dashboard_view.png` |
-| **Monitored Workload** | `vultr-security-lab` (Ubuntu 22.04 LTS on Vultr Cloud) | Verified Telemetry |
-| **Network Path** | Tailscale Encrypted Mesh VPN to AWS Wazuh SIEM | Verified Architecture |
-| **Target Path** | `/etc/ssh/sshd_config` | Auditd / Syscheck Path |
-| **Observed Event Count** | 1 alert in 1-hour window; 19 events in 24-hour search | `03_sshd_config_search_24h.png` |
-| **Final Disposition** | **Disposition Pending Supporting Evidence** | Requires live host terminal evidence |
-
-#### Case 001 Observations & Triage Summary
-1. **Alert Discovery:** Custom Rule `100100` fired at 01:48:49. Threat Hunting confirmed an isolated single event (1 hit) during the one-hour window.
-2. **Template Bug Discovery:** The observed alert description rendered as `"SSH configuration file modified on "` with trailing empty space. Root-cause analysis revealed that `agent.name` does not expand in Wazuh rule descriptions, leading to the authored v2 ruleset using `$(file)`.
-3. **Authentication Failure Scope:** No authentication failure events were displayed in the reviewed dashboard view filtered specifically to rule ID 100100. This observation is limited to that specific rule and query scope and does not establish the absence of other authentication failures or brute-force activity across the host.
-4. **Contextual Sudo Evaluation:** A 24-hour free-text search for `sshd_config` returned 19 historical events, all Level 3 logs mapped to `T1548.003 - Sudo and Sudo Caching`. This technique tag reflects routine administrative `sudo` execution, not adversary exploitation.
-5. **Host Evidence Requirements:** Definitive incident disposition requires live terminal output to verify configuration diffs, correlate `/var/log/auth.log` timestamps, and confirm effective runtime directives via `sudo sshd -T`.
-
-*Full investigation write-up: [`docs/case-001-ssh-config-change.md`](docs/case-001-ssh-config-change.md).*
-
----
-
-### Case 002: Real-Time FIM Lifecycle Detection (Create, Modify, Delete)
-
-| Parameter | Operational Detail | Evidence Basis |
-|:---|:---|:---|
-| **Incident Title** | FIM Lifecycle Testing: Create, Modify, and Delete Event Detection | Verified In-Lab Lifecycle |
-| **Monitored Workload** | `vultr-security-lab` (Ubuntu 22.04 LTS on Vultr Cloud) | Verified Telemetry |
-| **Network Path** | Tailscale Encrypted Mesh VPN to AWS Wazuh SIEM | Verified Architecture |
-| **Detection Mechanism** | Inotify Real-Time FIM (`syscheck`) + Ruleset v2 (Rules 100100–100102) | Verified Ruleset |
-| **Target Directory** | Drop-in configuration directory `/etc/ssh/sshd_config.d/` | Inotify Watcher |
-| **Test Automation** | Automated safe drop-in script [`scripts/fim_demo.sh`](scripts/fim_demo.sh) | Executed on Host |
-| **Verification Status** | **VERIFIED** — Create, Modify, and Delete alerts successfully generated | `fim_demo_timeline.txt` |
-
-#### Case 002 Lifecycle Timeline & Results
 ```text
-2026-10-14T02:15:10Z  CREATED  /etc/ssh/sshd_config.d/99-fim-demo.conf  --> Rule 100101 (Level 7) [VERIFIED]
-2026-10-14T02:15:20Z  MODIFIED /etc/ssh/sshd_config.d/99-fim-demo.conf  --> Rule 100100 (Level 8) [VERIFIED]
-2026-10-14T02:16:05Z  DELETED  /etc/ssh/sshd_config.d/99-fim-demo.conf  --> Rule 100102 (Level 7) [VERIFIED]
+Alert or event
+   -> validate rule and query scope
+   -> inspect raw fields
+   -> expand to surrounding host activity
+   -> correlate auth/audit/host controls
+   -> state evidence gaps
+   -> assign disposition only when supported
 ```
 
-#### Comparing Detection Approaches: Auditd vs. Real-Time FIM
-| Capability | Case 001: Auditd Detection | Case 002: Real-Time FIM (syscheck) |
-|:---|:---|:---|
-| **Subsystem** | Linux Kernel Audit Subsystem (`auditd`) | Inotify Filesystem Event Monitor (`syscheck`) |
-| **Primary Strength** | Captures execution context, syscalls, and user identity | Captures exact textual diffs, hash transitions, and file attributes |
-| **Alert Trigger** | Command execution & filesystem write syscalls | File modification, creation, or deletion events |
-| **Network Transit** | Encrypted over Tailscale to AWS Wazuh SIEM | Encrypted over Tailscale to AWS Wazuh SIEM |
-| **Operational Value** | Answers **WHO** executed the change and **WHAT COMMAND** was run | Answers **WHAT EXACT DIRECTIVE** changed and **WHAT FILE** was affected |
-
-*Full lifecycle write-up: [`docs/case-002-fim-lifecycle.md`](docs/case-002-fim-lifecycle.md).*
+[Open the detailed triage runbook](docs/investigation-workflow.md)
 
 ---
 
-<a id="evidence-gallery"></a>
-## 📸 Technical Evidence Gallery
+<a id="evidence-and-verification"></a>
+## Evidence and Verification
 
-Authentic captures directly from the running Wazuh Threat Hunting dashboard and verified in-lab test executions. Private IP ranges and cloud manager hostnames are sanitized in accordance with the [Evidence Integrity Policy](evidence/README.md).
-
-### Evidence 01: Threat Hunting Events View (Rule 100100)
-*Threat Hunting > Events query for `rule.id: 100100` on `vultr-security-lab`.*
+### Existing Case 001 evidence
 
 <div align="center">
-  <img src="evidence/observed/01_rule100100_events_view.png" alt="Evidence 01 - Rule 100100 Events View" width="95%"/>
+  <img src="evidence/observed/01_rule100100_events_view.png" alt="Rule 100100 events view" width="95%"/>
 </div>
 
-> **Analytical Significance:** Confirms in-lab firing of custom rule 100100 at 01:48:49. Shows the empty string bug trailing `"modified on"`, which led to the authored v2 `$(file)` variable fix.
-
----
-
-### Evidence 02: Threat Hunting Dashboard Metrics View
-*Threat Hunting Dashboard view showing 1-hour event distribution and security metrics.*
+**What it proves:** Custom Rule 100100 produced one Level 8 alert in the captured query.
 
 <div align="center">
-  <img src="evidence/observed/02_rule100100_dashboard_view.png" alt="Evidence 02 - Dashboard Metrics View" width="95%"/>
+  <img src="evidence/observed/02_rule100100_dashboard_view.png" alt="Rule 100100 dashboard view" width="95%"/>
 </div>
 
-> **Analytical Significance:** Confirms alert isolation: exactly 1 Total alert and 0 Level 12+ critical alerts.  
-> **Note on Authentication Failure Metric:** No authentication failure events were displayed in this reviewed dashboard view filtered specifically to rule ID 100100. This observation is limited to that specific rule and query scope and does not establish the absence of other authentication failures or brute-force activity across the monitored host.
-
----
-
-### Evidence 03: 24-Hour Contextual Log Search
-*Wider search for `sshd_config` across a 24-hour window returning 19 events.*
+**Query scope warning:** authentication counters in this screenshot are filtered to Rule 100100. They cannot be used to conclude that the host had no authentication failures.
 
 <div align="center">
-  <img src="evidence/observed/03_sshd_config_search_24h.png" alt="Evidence 03 - 24-Hour Context Search" width="95%"/>
+  <img src="evidence/observed/03_sshd_config_search_24h.png" alt="sshd_config contextual search" width="95%"/>
 </div>
 
-> **Analytical Significance:** Contextual evaluation of 19 events shows all classified at Level 3 under MITRE `T1548.003 (Sudo and Sudo Caching)` by Wazuh's default sudo decoder, reflecting administrative command execution during host setup.
+**What it proves:** the search returned 19 Level 3 events with Wazuh's sudo related ATT&CK classification. The ATT&CK tag alone does not establish that every event was authorized or benign.
 
----
+### New authentication evidence
 
-### Case 002 Lifecycle Evidence (DEMO-01 to DEMO-03)
-Documented in [`evidence/demo/fim_demo_timeline.txt`](evidence/demo/fim_demo_timeline.txt) and [`evidence/demo/README.md`](evidence/demo/README.md):
-- **DEMO-01 (Create):** Drop-in file `/etc/ssh/sshd_config.d/99-fim-demo.conf` added &rarr; triggers Rule `100101` (Level 7).
-- **DEMO-02 (Modify):** Text comment appended &rarr; triggers Rule `100100` (Level 8) with diff capture.
-- **DEMO-03 (Delete):** Safe cleanup executed &rarr; triggers Rule `100102` (Level 7).
+The November captures supplied for this revision document endpoint state, sudo activity, Rule 5710 invalid user events, Rule 5712 brute force correlation, host authentication logs, and Fail2Ban response.
+
+> [!NOTE]
+> Sanitized publication copies of those screenshots should be added under `evidence/observed/` before this branch is merged. The supporting case document is already aligned to the observed fields and intentionally avoids claiming compromise.
+
+[Evidence provenance and publication policy](evidence/README.md)
 
 ---
 
 <a id="implementation-status"></a>
-## 📊 Current Implementation Status
+## Implementation Status
 
-To ensure complete defensibility during technical interviews, the lab tracks implementation status using standardized classifications:
-
-| Component / Capability | Status | Evidence Basis / Verification Record |
+| Capability | Status | Evidence based interpretation |
 |:---|:---:|:---|
-| **Monitored Workload (Vultr Ubuntu 22.04)** | **VERIFIED** | Host `vultr-security-lab` reporting live telemetry in all captures |
-| **Tailscale Encrypted Mesh VPN** | **VERIFIED** | Private overlay tunnel securing Vultr-to-AWS telemetry transit |
-| **AWS Dedicated Wazuh SIEM** | **VERIFIED** | Wazuh Manager 4.x & Threat Hunting Dashboard operational on AWS EC2 |
-| **Case 001: Auditd SSH Change Alert** | **VERIFIED** | Rule 100100 fired at 01:48:49 (Level 8, 1 hit in 1h window, EV-01..03) |
-| **Case 002: Real-Time FIM Lifecycle** | **VERIFIED** | Verified Create (100101), Modify (100100), Delete (100102) via `fim_demo.sh` |
-| **Ruleset v2 (`$(file)` Variable Fix)** | **VERIFIED** | Validated via Python XML linter and tested in Case 002 lifecycle |
-| **Python XML Rule Linter** | **IMPLEMENTED** | [`scripts/lint_rules.py`](scripts/lint_rules.py) validates local ruleset (0 errors) |
-| **Safe FIM Demo Automation** | **IMPLEMENTED** | [`scripts/fim_demo.sh`](scripts/fim_demo.sh) creates safe drop-in file with UTC timeline |
-| **Evidence Collector Script** | **IMPLEMENTED** | [`scripts/collect_lab_evidence.sh`](scripts/collect_lab_evidence.sh) captures & redacts host state |
-| **SSH Hardening Implementation** | **PENDING VERIFICATION** | Reference baseline defined; awaiting sanitized `sudo sshd -T` capture |
-| **UFW Firewall Implementation** | **PENDING VERIFICATION** | Reference rules documented; awaiting sanitized `sudo ufw status` capture |
-| **Case 001 Final Disposition** | **PENDING VERIFICATION** | Triage runbook complete; awaiting host auth logs & diff verification |
+| Wazuh endpoint telemetry | **OBSERVED** | Live endpoint and Threat Hunting captures |
+| Custom Rule 100100 | **OBSERVED** | Historical Level 8 alert captured |
+| Rules 100101 and 100102 | **IMPLEMENTED** | Authored in ruleset; direct alert captures pending |
+| FIM lifecycle script | **TEST EXECUTED** | Filesystem actions recorded; expected alerts not yet captured |
+| Rule 5710 invalid user telemetry | **OBSERVED** | Repeated non existent user attempts captured |
+| Rule 5712 brute force telemetry | **OBSERVED** | Correlated Wazuh brute force alerts captured |
+| Rule 5402 sudo telemetry | **OBSERVED** | Successful sudo to root events captured |
+| Fail2Ban sshd jail | **OBSERVED** | Active jail and cumulative bans captured |
+| UFW | **OBSERVED** | Active, default deny incoming; public TCP/22 exception documented |
+| auditd | **OBSERVED SERVICE STATE** | Active service; not used as unsupported proof for Case 001 |
+| SSH hardening reference | **REFERENCE** | Intended settings documented; effective `sshd -T` evidence pending |
+| Native Wazuh rule validation | **PENDING** | `wazuh-analysisd -t` output still needed |
+| Windows, Sentinel, Defender XDR, KQL | **PLANNED** | Future expansion only |
 
 ---
 
 <a id="roadmap"></a>
-## 🚀 Future Roadmap
+## Roadmap
 
-Planned engineering milestones tracked with strict Definitions of Done:
+Highest priority next steps:
 
-| Milestone | Objective | Scope | Status |
-|:---:|:---|:---|:---:|
-| **1.1** | **Real-Time FIM Lifecycle Validation** | Deploy ruleset v2; run `fim_demo.sh` to capture create/modify/delete alerts | **VERIFIED (Case 002)** |
-| **1.2** | **Who-Data Actor Attribution** | Enable Linux `auditd` who-data mode to capture `audit.login_user.name` and process binary | **PLANNED** |
-| **1.3** | **Expanded Persistence Monitoring** | Expand FIM coverage to `~/.ssh/authorized_keys` and `/etc/pam.d/sshd` | **PLANNED** |
-| **1.4** | **Rule Tuning & Baselines** | Aggregate 7-day telemetry to calculate baseline change frequency | **PLANNED** |
-| **2.1** | **Windows Endpoint Telemetry** | Deploy Windows workstation with SwiftOnSecurity Sysmon configuration | **PLANNED** |
-| **2.2** | **Microsoft Sentinel Ingestion** | Configure Log Analytics Workspace & Azure Monitor Agent ingestion | **PLANNED** |
-| **2.3** | **Defender XDR & KQL Hunting** | Author custom KQL hunting queries for anomalous authentications | **PLANNED** |
+1. Run and capture native `wazuh-analysisd -t` validation.
+2. Confirm the deployed directory based FIM configuration.
+3. Re run the safe FIM lifecycle test and capture Rules 100101, 100100, and 100102.
+4. Capture `sshd -t` and sanitized `sshd -T` output.
+5. Correlate one hostile source across Wazuh, host logs, and Fail2Ban.
+6. Decide whether public SSH remains intentionally exposed for research or is restricted to the management path.
+7. Add Windows/Sysmon and Microsoft Sentinel only after the Linux cases are fully evidenced.
 
-Detailed acceptance criteria are documented in [`docs/roadmap.md`](docs/roadmap.md).
+[Full roadmap](docs/roadmap.md)
 
 ---
 
-<a id="documentation-navigation"></a>
-## 📁 Documentation Navigation
+## Repository Navigation
 
 ```text
-soc-investigation-lab/
-│
-├── README.md                               # Primary portfolio overview & architecture documentation
-├── .gitignore                              # Excludes raw collected evidence, keys, and temp files
-│
-├── assets/                                 # Visual presentation assets & editable diagrams
-│   ├── project-cover.png                   # High-res SOC lab cover preview (16:9)
-│   ├── project-cover.svg                   # Editable vector source for project cover
-│   ├── architecture/
-│   │   ├── lab-architecture.png            # High-resolution architectural diagram
-│   │   ├── lab-architecture.svg            # Editable vector architectural blueprint
-│   │   └── pilot-architecture.png          # Reference pilot architecture
-│   └── diagrams/
-│       ├── investigation-workflow.png      # SOC triage lifecycle preview
-│       ├── investigation-workflow.svg      # Editable vector triage lifecycle
-│       ├── detection-pipeline.png          # Detection logic preview (Case 001 & Case 002)
-│       └── detection-pipeline.svg          # Editable vector detection flow
-│
-├── docs/                                   # Detailed case studies & engineering documentation
-│   ├── case-001-ssh-config-change.md       # Comprehensive Case 001 investigation record (Auditd)
-│   ├── case-002-fim-lifecycle.md           # Comprehensive Case 002 investigation record (FIM)
-│   ├── investigation-workflow.md           # SOC analyst standard operating triage runbook
-│   └── roadmap.md                          # Planned development milestones & DoD criteria
-│
-├── detections/                             # SIEM detection engineering artifacts
-│   ├── local_rules.xml                     # Custom Wazuh ruleset (Rules 100100-100102)
-│   ├── ossec_fim_snippet.xml               # Agent syscheck XML configuration block
-│   └── CHANGELOG.md                        # Version history & rule refactoring record
-│
-├── evidence/                               # Authentic in-lab telemetry & verification evidence
-│   ├── README.md                           # Evidence integrity policy & provenance index
-│   ├── observed/                           # Case 001: Authentic dashboard captures
-│   │   ├── 01_rule100100_events_view.png   # Threat Hunting Events capture (Rule 100100)
-│   │   ├── 02_rule100100_dashboard_view.png# Threat Hunting Dashboard metrics view
-│   │   └── 03_sshd_config_search_24h.png   # 24-hour contextual search (19 events)
-│   └── demo/                               # Case 002: FIM lifecycle test telemetry
-│       ├── README.md                       # Case 002 verification documentation
-│       └── fim_demo_timeline.txt           # UTC timeline: Create, Modify, and Delete events
-│
-├── hardening/                              # Defensive configuration baselines
-│   ├── sshd_hardening_reference.conf       # Hardened OpenSSH server configuration reference
-│   └── ufw_reference.md                    # UFW host firewall policy & ordering guide
-│
-└── scripts/                                # Automation, linting, and evidence tooling
-    ├── lint_rules.py                       # Python XML rule validator for Wazuh local rules
-    ├── fim_demo.sh                         # Safe drop-in file FIM firing demonstration
-    └── collect_lab_evidence.sh             # Host snapshot collector with IP sanitization
+assets/
+  project-cover.*                  presentation assets
+  architecture/                    architecture graphics
+  diagrams/                        investigation graphics
+
+detections/
+  local_rules.xml                  custom Wazuh FIM rules
+  ossec_fim_snippet.xml            corrected reference FIM configuration
+  CHANGELOG.md                     rule history and verification status
+
+docs/
+  case-001-ssh-config-change.md     observed FIM configuration alert
+  case-002-fim-lifecycle.md         controlled FIM test and evidence gaps
+  case-003-ssh-authentication-attacks.md
+  investigation-workflow.md
+  roadmap.md
+
+evidence/
+  observed/                         authentic live lab captures
+  demo/                             controlled test execution records
+
+hardening/
+  sshd_hardening_reference.conf
+  ufw_reference.md
+
+scripts/
+  collect_lab_evidence.sh
+  fim_demo.sh
+  lint_rules.py
 ```
 
 ---
 
-## 📚 References & Standards
+## Technical References
 
-- [Wazuh User Manual: Creating Custom FIM Rules](https://documentation.wazuh.com/current/user-manual/capabilities/file-integrity/creating-custom-fim-rules.html)
-- [Wazuh User Manual: Auditing Who-Data (Auditd)](https://documentation.wazuh.com/current/user-manual/capabilities/auditing-whodata/index.html)
-- [Wazuh Ruleset XML Syntax Reference](https://documentation.wazuh.com/current/user-manual/ruleset/ruleset-xml-syntax/rules.html)
-- [OpenSSH Official Documentation: sshd_config(5)](https://man.openbsd.org/sshd_config)
-- [Tailscale Architecture: WireGuard Mesh Networking Documentation](https://Tailscale.com/kb/1017/overview)
-- [MITRE ATT&CK Framework: T1548.003 Sudo and Sudo Caching](https://attack.mitre.org/techniques/T1548/003/)
-
----
+* [Wazuh File Integrity Monitoring](https://documentation.wazuh.com/current/user-manual/capabilities/file-integrity/index.html)
+* [Wazuh custom FIM rules](https://documentation.wazuh.com/current/user-manual/capabilities/file-integrity/creating-custom-fim-rules.html)
+* [Wazuh FIM who data](https://documentation.wazuh.com/current/user-manual/capabilities/file-integrity/advanced-settings.html)
+* [MITRE ATT&CK](https://attack.mitre.org/)
+* [Tailscale documentation](https://tailscale.com/kb/)
 
 <div align="center">
-  <sub>Developed by <b>George Beazer</b> • Cybersecurity Student Senior at KSU • Evidence-backed cybersecurity portfolio • All telemetry verified from live lab deployments.</sub>
+  <sub>George Beazer • Cybersecurity Student, Senior at KSU • Evidence backed SOC portfolio</sub>
 </div>
