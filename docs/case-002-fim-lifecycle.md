@@ -1,41 +1,18 @@
-# Case 002: Real-Time File Integrity Monitoring (FIM) Lifecycle Detection
+# Case 002: Safe FIM Lifecycle Test Harness
 
 ## Executive Summary
 
 | Attribute | Investigation Details |
 |:---|:---|
-| **Incident Title** | FIM Lifecycle Testing: Create, Modify, and Delete Event Detection |
-| **Monitored Asset** | `vultr-security-lab` (Ubuntu 22.04 LTS Cloud Workload) |
-| **Telemetry Transport** | Tailscale Encrypted Mesh VPN to AWS Wazuh SIEM |
-| **Detection Mechanism** | Wazuh File Integrity Monitoring (`syscheck`) + Ruleset v2 (Rules 100100, 100101, 100102) |
-| **Target Directory** | Drop-in configuration directory `/etc/ssh/sshd_config.d/` |
-| **Test Harness** | Automated safe drop-in script [`scripts/fim_demo.sh`](../scripts/fim_demo.sh) |
-| **Verification Status** | **VERIFIED** — Successfully generated and verified Create, Modify, and Delete alert records |
+| **Purpose** | Exercise create, modify, and delete actions in the OpenSSH drop-in directory without changing SSH behavior |
+| **Target** | `/etc/ssh/sshd_config.d/99-fim-demo.conf` |
+| **Test Harness** | `scripts/fim_demo.sh` |
+| **Expected Custom Rules** | Create 100101, Modify 100100, Delete 100102 |
+| **Current Verification Status** | **TEST EXECUTED; WAZUH ALERT CAPTURE PENDING** |
 
----
+## What the Existing Evidence Proves
 
-## 1. Context & Detection Engineering Objectives
-
-In modern Linux distributions such as Ubuntu 22.04 LTS, the OpenSSH server evaluates configuration drop-in files included from `/etc/ssh/sshd_config.d/*.conf`. Because OpenSSH follows **first-value-wins** parsing order, creating, editing, or removing drop-in configuration files directly affects the active authentication surface without requiring alterations to `/etc/ssh/sshd_config`.
-
-The objective of Case 002 was to test and verify the complete real-time FIM detection lifecycle:
-1. **Creation:** Detect when a new drop-in configuration file is added.
-2. **Modification:** Detect when a drop-in file is edited, capturing textual change diffs.
-3. **Deletion:** Detect when a drop-in file is removed.
-
----
-
-## 2. Test Execution & Automated Harness
-
-To validate detection without risking administrative lockout or altering active SSH security policies, the test harness [`scripts/fim_demo.sh`](../scripts/fim_demo.sh) was executed on `vultr-security-lab`:
-
-- **Drop-In Filename:** `99-fim-demo.conf` (lexically ordered last to ensure it cannot override earlier configuration values).
-- **Content:** Comment-only syntax (`# FIM demonstration file`).
-- **Daemon Impact:** Zero SSH daemon reloads or restarts required.
-
-### Recorded Execution Timeline
-
-From [`evidence/demo/fim_demo_timeline.txt`](../evidence/demo/fim_demo_timeline.txt):
+The file `evidence/demo/fim_demo_timeline.txt` records that the demo script performed three filesystem actions:
 
 ```text
 2026-10-14T02:15:10Z  CREATED  /etc/ssh/sshd_config.d/99-fim-demo.conf  (expect rule 100101)
@@ -43,54 +20,31 @@ From [`evidence/demo/fim_demo_timeline.txt`](../evidence/demo/fim_demo_timeline.
 2026-10-14T02:16:05Z  DELETED  /etc/ssh/sshd_config.d/99-fim-demo.conf  (expect rule 100102)
 ```
 
----
+That timeline is valid evidence of **test execution**. It is not, by itself, evidence that Wazuh generated all three corresponding alerts.
 
-## 3. Verified Detection Logic & Lifecycle Results
+## Expected Detection Logic
 
-```
-[File Created: 99-fim-demo.conf]  ---> syscheck 554 ---> Rule 100101 Fired (Level 7) [VERIFIED]
-                 │ (10s delay)
-[File Modified: Comment Added]    ---> syscheck 550 ---> Rule 100100 Fired (Level 8) [VERIFIED]
-                 │ (45s delay)
-[File Deleted: Cleanup Executed]  ---> syscheck 553 ---> Rule 100102 Fired (Level 7) [VERIFIED]
-```
+| Action | Built-in FIM Parent | Custom Child | Evidence State |
+|:---|:---:|:---:|:---|
+| File modified | 550 | 100100 | Custom rule observed historically in Case 001; v2 path rendering still needs live capture |
+| File added | 554 | 100101 | Authored; alert capture pending |
+| File deleted | 553 | 100102 | Authored; alert capture pending |
 
-### Event 1: File Creation (Rule 100101)
-- **Parent Rule:** `554` (File added to the system).
-- **Matching Child:** Rule `100101` (Severity Level 7).
-- **Regex Filter:** `^/etc/ssh/sshd_config($|\.d/.*)` matching `file` field.
-- **Rendered Output:** `SSH configuration file added: /etc/ssh/sshd_config.d/99-fim-demo.conf`
-- **Result:** Successfully validated; drop-in file creation surfaced immediately.
+## Corrected Real-Time FIM Reference
 
-### Event 2: File Modification (Rule 100100)
-- **Parent Rule:** `550` (Integrity checksum changed).
-- **Matching Child:** Rule `100100` (Severity Level 8).
-- **Diff Tracking:** Captured differential in `syscheck.diff` showing appended comment.
-- **Rendered Output:** `SSH configuration file modified: /etc/ssh/sshd_config.d/99-fim-demo.conf`
-- **Result:** Validated `$(file)` variable substitution, resolving the template bug identified in Case 001.
+Wazuh real-time FIM works on directories. The repository reference configuration therefore monitors `/etc/ssh` in real time and uses the custom PCRE2 rule filter to narrow custom alerts to `sshd_config` and `sshd_config.d/*`.
 
-### Event 3: File Deletion (Rule 100102)
-- **Parent Rule:** `553` (File deleted).
-- **Matching Child:** Rule `100102` (Severity Level 7).
-- **Rendered Output:** `SSH configuration file deleted: /etc/ssh/sshd_config.d/99-fim-demo.conf`
-- **Result:** Validated cleanup detection upon execution of `sudo scripts/fim_demo.sh --cleanup`.
+See `detections/ossec_fim_snippet.xml`.
 
----
+## Definition of Done
 
-## 4. Comparing Detection Approaches: Auditd vs. Real-Time FIM
+Case 002 becomes **VERIFIED** only after all of the following are present:
 
-This lab implements a defense-in-depth approach by combining both Auditd and FIM mechanisms:
+1. Native manager validation passes with `sudo /var/ossec/bin/wazuh-analysisd -t`.
+2. The corrected directory-based FIM configuration is confirmed on the live agent.
+3. Wazuh Threat Hunting captures show Rule 100101 for create.
+4. Wazuh Threat Hunting captures show Rule 100100 using the v2 `$(file)` description for modify.
+5. Wazuh Threat Hunting captures show Rule 100102 for delete.
+6. If claiming content change reporting, an alert is expanded to show `syscheck.diff`.
 
-| Capability | Case 001: Auditd Detection | Case 002: Real-Time FIM (syscheck) |
-|:---|:---|:---|
-| **Mechanism** | Linux Kernel Audit Subsystem (`auditd`) | Inotify Filesystem Event Monitor (`syscheck`) |
-| **Primary Strength** | Captures execution context, syscalls, and user identity | Captures exact textual diffs, hash transitions, and file attributes |
-| **Alert Trigger** | Command execution & filesystem write syscalls | File modification, creation, or deletion events |
-| **Network Transit** | Encrypted over Tailscale to AWS Wazuh SIEM | Encrypted over Tailscale to AWS Wazuh SIEM |
-| **Operational Value** | Answers **WHO** executed the change and **WHAT COMMAND** was run | Answers **WHAT EXACT DIRECTIVE** changed and **WHAT FILE** was affected |
-
----
-
-## 5. Conclusion & Operational Impact
-
-The Case 002 verification confirmed that custom ruleset v2 reliably detects tampering across the complete file lifecycle in OpenSSH drop-in directories. Combining inotify FIM with auditd event logging provides the SOC analyst with both the content change diff and the execution context needed for rapid incident triage.
+Until then, this case demonstrates **safe test design and expected detection logic**, not a completed lifecycle validation.
