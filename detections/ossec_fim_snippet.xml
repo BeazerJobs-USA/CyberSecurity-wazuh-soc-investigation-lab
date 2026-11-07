@@ -1,25 +1,44 @@
 <!--
-  Wazuh agent FIM entries for the Ubuntu endpoint.
+  Wazuh agent FIM reference for the Ubuntu endpoint.
 
-  Add the two <directories> lines inside the EXISTING <syscheck> block of
+  IMPORTANT:
+  Wazuh real-time monitoring works on directories, not individual files.
+  Monitor /etc/ssh in real time and let the custom rules in local_rules.xml
+  restrict alerting to sshd_config and sshd_config.d/*.
+
+  Add this <directories> entry inside the EXISTING <syscheck> block of
   /var/ossec/etc/ossec.conf. Do not add a second <syscheck> block.
-  Restart the agent afterwards:  sudo systemctl restart wazuh-agent
 
-  report_changes="yes" stores a text diff so the alert shows what changed.
-  realtime="yes" reports the change within seconds instead of waiting for the
-  next scheduled scan.
+  Restart after a configuration change:
+    sudo systemctl restart wazuh-agent
+
+  report_changes="yes" requests text change reporting for supported text files.
+  The Wazuh diff size limit is configurable; do not assume every change will
+  contain syscheck.diff without checking the generated alert.
+
+  STATUS:
+  This file is the corrected repository reference configuration. The currently
+  deployed agent configuration must be verified from the live ossec.conf before
+  claiming this exact snippet is active.
 -->
 <syscheck>
-  <directories check_all="yes" report_changes="yes" realtime="yes">/etc/ssh/sshd_config</directories>
-  <directories check_all="yes" report_changes="yes" realtime="yes">/etc/ssh/sshd_config.d</directories>
+  <directories check_all="yes" report_changes="yes" realtime="yes">/etc/ssh</directories>
 </syscheck>
 
 <!--
-  NOT DEPLOYED. Planned upgrade (see docs/roadmap.md): who-data mode adds the
-  acting user and process (audit.login_user.name, audit.process.name) to the
-  alert. It needs auditd installed and running on the endpoint. Real-time mode
-  alone tells you which file changed and when, not who changed it.
+  PLANNED WHO-DATA UPGRADE.
 
-  <directories check_all="yes" report_changes="yes" whodata="yes">/etc/ssh/sshd_config</directories>
-  <directories check_all="yes" report_changes="yes" whodata="yes">/etc/ssh/sshd_config.d</directories>
+  Linux who-data can enrich FIM events with user/process context. Wazuh can use
+  the Linux Audit subsystem as the provider. auditd is active on the endpoint,
+  but this repository does not yet contain alert evidence proving who-data is
+  enabled for /etc/ssh.
+
+  Example reference:
+
+  <syscheck>
+    <directories check_all="yes" report_changes="yes" whodata="yes">/etc/ssh</directories>
+    <whodata>
+      <provider>audit</provider>
+    </whodata>
+  </syscheck>
 -->

@@ -1,32 +1,39 @@
-# Engineering Roadmap & Planned Capabilities
+# SOC Investigation Lab Roadmap
 
-## Overview
+This roadmap separates completed evidence from work that still needs direct validation.
 
-This roadmap defines engineering milestones for the SOC Investigation Lab. To ensure defensibility and technical integrity, **all milestones listed below are tracked with strict Definitions of Done (DoD)**, clearly distinguishing verified capabilities from planned future extensions.
+## Phase 1: Evidence hardening and Linux detection maturity
 
----
+| # | Objective | Definition of done | Status |
+|:---:|:---|:---|:---:|
+| 1.1 | Correct real time FIM scope | Repository reference monitors `/etc/ssh` as a directory and custom rules narrow the alert paths | **COMPLETE IN REPO** |
+| 1.2 | Native manager rule validation | `sudo /var/ossec/bin/wazuh-analysisd -t` passes after deploying the current ruleset | **PENDING EVIDENCE** |
+| 1.3 | Complete FIM lifecycle capture | Wazuh captures show create 100101, modify 100100, and delete 100102 for the demo file | **PENDING EVIDENCE** |
+| 1.4 | Verify v2 description field | Live alert shows `$(file)` resolving to the expected path | **PENDING EVIDENCE** |
+| 1.5 | Verify effective SSH hardening | Sanitized `sshd -t` and `sshd -T` output matches the intended baseline | **PENDING EVIDENCE** |
+| 1.6 | Who data actor attribution | Enable and validate Wazuh who data for `/etc/ssh` with user/process fields captured | **PLANNED** |
+| 1.7 | Tune public SSH controls | Decide whether public SSH remains intentionally exposed for telemetry or is restricted to a management path; document compensating controls | **IN REVIEW** |
 
-## Phase 1: Linux Detection Engineering Enhancements
+## Phase 2: Authentication detection and response
 
-| # | Objective | Technical Scope | Definition of Done (DoD) | Implementation Status |
-|:---:|:---|:---|:---|:---:|
-| **1.1** | **Real-Time FIM Lifecycle Validation** | Deploy ruleset v2 (`$(file)` variable fix) to Wazuh manager; execute `scripts/fim_demo.sh` to generate file addition, modification, and deletion events. | Directory `evidence/demo/` contains verified timeline evidence and documentation for Rules 100101, 100100, and 100102 with matching UTC timestamps. | **VERIFIED (Case 002)** |
-| **1.2** | **Actor Attribution via Who-Data** | Integrate Linux `auditd` on the Vultr endpoint and enable `whodata="yes"` in `ossec.conf`. | Alerts for Rule 100100 enrich with acting user (`audit.login_user.name`) and binary (`audit.process.name`), eliminating reliance on manual log correlation. | **PLANNED** |
-| **1.3** | **Expanded Persistence Monitoring** | Extend FIM rules to monitor `~/.ssh/authorized_keys` and `/etc/pam.d/sshd`. | New custom rules, safe firing test scripts, and validated alerts mapped to MITRE ATT&CK T1098.004 (SSH Authorized Keys). | **PLANNED** |
-| **1.4** | **Rule Tuning & Baselines** | Aggregate 7 days of operational FIM telemetry to calculate false-positive rates and tune severity levels. | Documented baseline analysis report with tuning rationale for rules 100100–100102. | **PLANNED** |
+| # | Objective | Definition of done | Status |
+|:---:|:---|:---|:---:|
+| 2.1 | Invalid user investigation | Document Rule 5710 activity with query scope and source context | **OBSERVED** |
+| 2.2 | Brute force correlation | Document Rule 5712 alerts and correlate them with host logs | **OBSERVED** |
+| 2.3 | Fail2Ban response evidence | Show active sshd jail and cumulative ban metrics | **OBSERVED** |
+| 2.4 | Detection to response case study | Correlate one source across Wazuh, auth logs, and Fail2Ban while preserving privacy | **PLANNED** |
+| 2.5 | Baseline and tuning | Collect at least seven days of authentication telemetry and document normal versus suspicious patterns | **PLANNED** |
 
----
+## Phase 3: Enterprise endpoint and cloud expansion
 
-## Phase 2: Enterprise Cloud SIEM & Endpoint Expansion
+| # | Objective | Definition of done | Status |
+|:---:|:---|:---|:---:|
+| 3.1 | Windows endpoint telemetry | Windows 11 endpoint with Sysmon producing validated process, network, and file events | **PLANNED** |
+| 3.2 | Microsoft Sentinel ingestion | Live lab telemetry visible in Sentinel with documented data source and query results | **PLANNED** |
+| 3.3 | Defender XDR and KQL investigation | One evidence backed Windows investigation using KQL and endpoint telemetry | **PLANNED** |
+| 3.4 | Identity attack detection | Controlled Active Directory or Entra identity scenario with defensible logs and analyst disposition | **PLANNED** |
+| 3.5 | Automated response | Safe automated response validated against a controlled test and documented with rollback steps | **PLANNED** |
 
-| # | Objective | Technical Scope | Definition of Done (DoD) | Implementation Status |
-|:---:|:---|:---|:---|:---:|
-| **2.1** | **Windows Endpoint Telemetry** | Provision Windows 11 workstation endpoint; install Sysmon with modular SwiftOnSecurity configuration. | Sysmon event IDs 1 (Process Create), 3 (Network Connect), and 11 (File Create) actively collected. | **PLANNED** |
-| **2.2** | **Microsoft Sentinel Ingestion** | Deploy Log Analytics Workspace and Azure Monitor Agent / Wazuh forwarder to ingest multi-source telemetry into Microsoft Sentinel. | Live telemetry visible in Sentinel tables (`SecurityEvent`, `Sysmon_CL`, or `CommonSecurityLog`). | **PLANNED** |
-| **2.3** | **Defender XDR & KQL Investigations** | Author custom KQL threat hunting queries to detect anomalous authentication and living-off-the-land binaries (LOLBins). | Documented investigation case study with KQL queries, raw result tables, and execution screenshots. | **PLANNED** |
-| **2.4** | **Automated Incident Response (SOAR)** | Implement automated playbook (e.g., Azure Logic Apps or Wazuh active response) to temporarily isolate compromised hosts or drop offending source IPs. | Automated trigger validation log and incident ticket integration documented in lab write-up. | **PLANNED** |
+## Portfolio rule
 
----
-
-> [!NOTE]
-> All future items in this roadmap remain clearly segregated from current lab deliverables in the main architecture diagram and documentation.
+A roadmap item is moved to **verified** only when the repository contains direct evidence of the result, not only a configuration file, expected output, or script execution record.
