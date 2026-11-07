@@ -1,39 +1,63 @@
-# Technical Evidence Index & Provenance Record
+# Technical Evidence Index and Provenance Record
 
 ## Evidence Integrity Policy
 
-Every artifact within this repository represents authentic telemetry collected from the running cybersecurity lab. To uphold strict forensic and analytical integrity, evidence is categorized into two distinct catalogs:
+This repository separates **observed telemetry**, **scripted test execution**, and **planned validation**. A file is not labeled verified merely because a script expected an alert to occur.
 
-- **Observed Baseline Evidence (`evidence/observed/`):** Authentic telemetry captured during live cloud server monitoring and alert triage for **Case 001 (Auditd SSH Detection)**.
-- **Demonstration Telemetry (`evidence/demo/`):** Scripted lifecycle verification events generated via `scripts/fim_demo.sh` for **Case 002 (Real-Time FIM Lifecycle)**, explicitly segregated to maintain provenance.
+### Evidence categories
 
----
+- **Observed evidence**: screenshots or terminal captures produced by the live lab.
+- **Test execution evidence**: records proving that a controlled test action was performed.
+- **Pending verification**: a configuration, rule, or conclusion that still needs direct supporting output.
+- **Reference configuration**: hardened or corrected examples that are not automatically treated as the current live configuration.
 
-## 1. Case 001: Observed Evidence Catalog (Auditd-Based Detection)
+## 1. Case 001: Wazuh FIM SSH Configuration Change
 
-| Evidence ID | File Path | Dashboard Interface | Query / Filter Applied | Captured Telemetry | Analytical Significance |
-|:---:|:---|:---|:---|:---|:---|
-| **EV-01** | [`observed/01_rule100100_events_view.png`](observed/01_rule100100_events_view.png) | **Threat Hunting > Events** | `rule.id: 100100`<br>`agent.name: vultr-security-lab` | 1 hit @ 01:48:49<br>Level 8 alert<br>`vultr-security-lab` | Confirms working detection of SSH configuration modification on the Vultr endpoint. Identified template variable bug where `$(agent.name)` rendered empty, prompting the v2 `$(file)` refactoring. |
-| **EV-02** | [`observed/02_rule100100_dashboard_view.png`](observed/02_rule100100_dashboard_view.png) | **Threat Hunting > Dashboard** | `rule.id: 100100`<br>`agent.name: vultr-security-lab` | 1 Total alert<br>0 Level 12+ alerts<br>0 Auth failures (filtered view)<br>No ATT&CK tags | Confirms alert isolation in the 1-hour window. Note: the 0 authentication failures metric is limited specifically to this rule 100100 filter and does not prove absence of other auth failures across the host. Shows no ATT&CK tag mapped to Rule 100100. |
-| **EV-03** | [`observed/03_sshd_config_search_24h.png`](observed/03_sshd_config_search_24h.png) | **Threat Hunting > Dashboard** | Free-text search:<br>`sshd_config` (24h) | 19 Total events<br>All Level 3<br>MITRE: T1548.003 | Shows 19 historical events classified at Level 3 under MITRE `T1548.003 (Sudo and Sudo Caching)` by Wazuh's default sudo decoder, reflecting administrative command activity during host setup. |
+| ID | Artifact | What it proves | What it does not prove |
+|:---:|:---|:---|:---|
+| EV 01 | `observed/01_rule100100_events_view.png` | Rule 100100 fired once at Level 8 for `vultr-security-lab` | Exact changed directive, actor, or authorization |
+| EV 02 | `observed/02_rule100100_dashboard_view.png` | One Rule 100100 alert in the filtered one hour view | Absence of host wide authentication failures |
+| EV 03 | `observed/03_sshd_config_search_24h.png` | 19 Level 3 sudo related events were returned by the search | That all 19 events were benign or tied to the Rule 100100 event |
 
----
+## 2. Case 002: Safe FIM Lifecycle Test
 
-## 2. Case 002: FIM Lifecycle Evidence Catalog (Create, Modify, Delete)
+`demo/fim_demo_timeline.txt` records controlled create, modify, and delete actions against:
 
-| Evidence ID | File Path | Telemetry Trigger | Target Path | Rule Fired | Analytical Significance |
-|:---:|:---|:---|:---|:---:|:---|
-| **DEMO-01** | [`demo/fim_demo_timeline.txt`](demo/fim_demo_timeline.txt)<br>line 1 | File Creation | `/etc/ssh/sshd_config.d/99-fim-demo.conf` | **Rule 100101**<br>(Level 7) | Verifies real-time detection of drop-in file addition. Child of built-in FIM rule 554. Validated with `$(file)` path rendering. |
-| **DEMO-02** | [`demo/fim_demo_timeline.txt`](demo/fim_demo_timeline.txt)<br>line 2 | File Modification | `/etc/ssh/sshd_config.d/99-fim-demo.conf` | **Rule 100100**<br>(Level 8) | Verifies real-time detection of drop-in file modification with text change differential. Child of built-in FIM rule 550. |
-| **DEMO-03** | [`demo/fim_demo_timeline.txt`](demo/fim_demo_timeline.txt)<br>line 3 | File Deletion | `/etc/ssh/sshd_config.d/99-fim-demo.conf` | **Rule 100102**<br>(Level 7) | Verifies real-time detection of drop-in file deletion during cleanup. Child of built-in FIM rule 553. |
+`/etc/ssh/sshd_config.d/99-fim-demo.conf`
 
-*Detailed lifecycle documentation is available in [`evidence/demo/README.md`](demo/README.md).*
+The file contains **expected** custom rule IDs. It does not contain Wazuh alert records. Therefore:
 
----
+| Action | Expected rule | Current evidence status |
+|:---|:---:|:---|
+| Create | 100101 | Test action recorded; Wazuh alert capture pending |
+| Modify | 100100 | Test action recorded; v2 alert capture pending |
+| Delete | 100102 | Test action recorded; Wazuh alert capture pending |
 
-## Sanitization & Privacy Controls
+See `demo/README.md` for the verification checklist.
 
-To uphold security best practices and prevent unintentional credential or infrastructure leakage:
-1. **Private Network Information Masked:** Browser address bar showing private network IP ranges has been cropped from Screenshot 03.
-2. **Manager Hostname Masked:** Internal cloud manager hostname (`ip-172-...`) is sanitized with a solid black redaction box across all three captures.
-3. **Telemetry Integrity Preserved:** All timestamps, rule IDs, event counts, severity levels, and agent identifiers remain 100% unaltered.
+## 3. Case 003: SSH Authentication Attack Investigation
+
+New November 2026 captures document real unsolicited SSH authentication activity and defensive response on the lab endpoint.
+
+| ID | Artifact | Observed evidence |
+|:---:|:---|:---|
+| AUTH 01 | endpoint state capture | Current endpoint, Wazuh agent, and active security services |
+| AUTH 02 | sudo events capture | Successful sudo to root events in Wazuh |
+| AUTH 03 | Rule 5710 capture | Multiple attempts to authenticate with non existent users |
+| AUTH 04 | Rule 5712 capture | Wazuh correlated brute force activity against non existent users |
+| AUTH 05 | Fail2Ban capture | Active sshd jail with cumulative failed attempts and bans |
+| AUTH 06 | host auth log capture | Raw SSH failures, accepted administrative public key login, and sudo context |
+
+These artifacts support the conclusion that the public SSH service is receiving unsolicited authentication attempts and that Wazuh and Fail2Ban are observing/responding to that activity. They do **not** prove successful compromise.
+
+## Sanitization and Publication Rules
+
+Before publishing a new screenshot:
+
+1. Mask private manager hostnames and private/Tailscale addresses that identify the lab control plane.
+2. Preserve timestamps, rule IDs, levels, event descriptions, and counts unless there is a privacy reason to redact them.
+3. Do not alter evidence to make an event look more severe or complete than it was.
+4. Keep test generated telemetry clearly separated from unsolicited observed telemetry.
+5. Record the query scope when dashboard counters are shown.
+
+This evidence policy is intentionally conservative so that every portfolio claim can survive technical interview scrutiny.
