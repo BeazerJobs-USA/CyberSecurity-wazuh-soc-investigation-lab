@@ -1,21 +1,32 @@
 # Detection Rules Changelog
 
-## v2: Ruleset Expansion & Variable Refactoring (Status: Tested & Verified via Case 002 FIM Lifecycle)
+## v2.1: Evidence Alignment and FIM Configuration Correction
 
-- **Change:** All three custom FIM rule descriptions updated to use `$(file)` instead of `$(agent.name)`, and ruleset expanded to cover the complete file lifecycle:
-  - `100100`: SSH configuration file modified (Parent: Rule 550, Severity Level 8)
-  - `100101`: SSH configuration file added (Parent: Rule 554, Severity Level 7)
-  - `100102`: SSH configuration file deleted (Parent: Rule 553, Severity Level 7)
-- **Root Cause & Justification:** In the initial lab alert for Rule `100100` (captured in `evidence/observed/01_rule100100_events_view.png`), the rule description rendered as `"SSH configuration file modified on "` with trailing empty space. Analysis revealed that `agent.name` is not an extracted variable in Wazuh rule descriptions, causing it to expand to an empty string. Wazuh documentation specifies `file` as the decoded syscheck field for custom FIM rules, allowing the alert to explicitly specify the modified target path (`$(file)`).
-- **Validation & Testing:**
-  1. **Schema & Syntax:** Validated XML structure, parent IDs, and variable formatting via `python3 scripts/lint_rules.py` (0 errors, 0 warnings).
-  2. **In-Lab Lifecycle Verification:** Tested on `vultr-security-lab` using [`scripts/fim_demo.sh`](../scripts/fim_demo.sh). Verified real-time firing of Create (`100101`), Modify (`100100`), and Delete (`100102`) events for drop-in configuration file `/etc/ssh/sshd_config.d/99-fim-demo.conf` (recorded in [`evidence/demo/fim_demo_timeline.txt`](../evidence/demo/fim_demo_timeline.txt)).
+- Corrected the repository FIM reference so real-time monitoring targets the directory `/etc/ssh` rather than an individual file. Custom rule path matching still limits Rules 100100–100102 to `/etc/ssh/sshd_config` and `/etc/ssh/sshd_config.d/*`.
+- Reclassified Case 002 from **verified lifecycle detection** to **test executed, alert verification pending** because `fim_demo_timeline.txt` records the actions performed and the expected rule IDs but does not contain Wazuh alert records for Rules 100101 and 100102.
+- Kept Rule 100100 as **observed** because the repository contains an authentic Wazuh Threat Hunting capture showing Rule 100100 firing at Level 8.
+- Clarified that `scripts/lint_rules.py` is a repository linter and XML parser, not an XML schema validator. Native manager validation with `wazuh-analysisd -t` remains the authoritative deployment test.
+- Added November 2026 authentication telemetry to the portfolio narrative: default Wazuh SSH rules 5710 and 5712, successful sudo activity, active Fail2Ban, and current UFW state.
 
-## v1: Initial Detection Baseline (Status: Observed Firing in Case 001)
+## v2: Ruleset Expansion and Variable Refactoring
 
-- **Rules Introduced:**
-  - `100100`: SSH configuration modified (Parent: Rule 550, Severity Level 8) — **Fired in live lab (14 Oct 2026, 01:48:49) [VERIFIED]**
-  - `100101`: SSH configuration file added (Parent: Rule 554, Severity Level 7) — **Authored in baseline**
-  - `100102`: SSH configuration file deleted (Parent: Rule 553, Severity Level 7) — **Authored in baseline**
-- **Scope:** Restricted via PCRE2 regular expression to `/etc/ssh/sshd_config` and drop-in configurations `/etc/ssh/sshd_config.d/*`.
-- **Severity Tuning:** Severity levels established by operational impact (Level 8 warrants immediate analyst review; Level 7 flags file creation/deletion).
+- **Status:** Authored and repository-linted. Full manager-side lifecycle validation is still pending evidence.
+- Updated custom descriptions to use `$(file)` instead of the earlier `$(agent.name)` template.
+- Rules:
+  - `100100`: SSH configuration file modified, parent Rule 550, Level 8.
+  - `100101`: SSH configuration file added, parent Rule 554, Level 7.
+  - `100102`: SSH configuration file deleted, parent Rule 553, Level 7.
+- **Observed root cause:** The original Rule 100100 capture rendered `SSH configuration file modified on ` with a blank variable. The v2 rules use the decoded FIM field `file`, which Wazuh supports in rule descriptions.
+- **Repository QA:** `python3 scripts/lint_rules.py detections/local_rules.xml` checks XML parsing, local rule IDs, parent ID formatting, and risky description variables.
+- **Required before claiming full deployment validation:**
+  1. Run `sudo /var/ossec/bin/wazuh-analysisd -t` on the manager.
+  2. Deploy/reload the rules.
+  3. Run `scripts/fim_demo.sh`.
+  4. Capture Wazuh alerts for create, modify, and delete, including Rule 100101 and Rule 100102.
+
+## v1: Initial Detection Baseline
+
+- `100100`: SSH configuration modified, parent Rule 550, Level 8 — **observed firing in the live lab on 14 Oct 2026 at 01:48:49**.
+- `100101`: SSH configuration file added, parent Rule 554, Level 7 — authored.
+- `100102`: SSH configuration file deleted, parent Rule 553, Level 7 — authored.
+- Scope restricted by PCRE2 to the main OpenSSH configuration file and its drop-in directory.
