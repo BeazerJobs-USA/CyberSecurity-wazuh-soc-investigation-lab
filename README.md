@@ -13,7 +13,7 @@
 <br/>
 
 <a href="assets/project-cover.svg">
-  <img src="assets/project-cover.png" alt="Enterprise SOC Investigation Lab Cover" width="100%"/>
+  <img src="assets/project-cover.svg" alt="Enterprise SOC Investigation Lab Cover" width="100%"/>
 </a>
 <sub><i>Presentation graphics retained from the portfolio design work. Technical claims below are tied to documented evidence states.</i></sub>
 
@@ -82,7 +82,7 @@ The portfolio intentionally separates four evidence states:
 
 <div align="center">
   <a href="assets/architecture/lab-architecture.svg">
-    <img src="assets/architecture/lab-architecture.png" alt="SOC Investigation Lab Architecture" width="100%"/>
+    <img src="assets/architecture/lab-architecture.svg" alt="SOC Investigation Lab Architecture" width="100%"/>
   </a>
   <br/>
   <sub><i>Existing portfolio architecture graphic retained. Where a graphic and current evidence state differ, the written evidence status in this README is authoritative.</i></sub>
