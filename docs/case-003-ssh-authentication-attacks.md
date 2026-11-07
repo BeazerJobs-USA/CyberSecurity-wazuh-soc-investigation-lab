@@ -6,74 +6,90 @@ The public SSH service on `vultr-security-lab` received repeated unsolicited aut
 
 This case demonstrates **real observed internet attack telemetry**. It does not claim that the host was compromised.
 
-## Observed Evidence
+## Evidence Gallery
 
-### 1. Rule 5710: non existent user attempts
+> [!NOTE]
+> The new November screenshots were reviewed for this revision but their sanitized image files still need to be committed into `evidence/observed/`. This case page is intentionally not using fabricated or substituted screenshots.
+
+### AUTH 01: Endpoint and Security Control State
+
+Evidence reviewed shows the current endpoint as Ubuntu 26.04.1 LTS with the Wazuh agent active along with Tailscale, SSH, Fail2Ban, and auditd. UFW is active with default deny incoming, while TCP/22 remains explicitly allowed from Anywhere.
+
+**Publication status:** sanitized screenshot prepared, GitHub image file still pending.
+
+### AUTH 02: Privileged Administrative Activity
+
+Wazuh Threat Hunting captures show successful sudo to root events, including Rule 5402.
+
+**Publication status:** sanitized screenshot prepared, GitHub image file still pending.
+
+### AUTH 03: Rule 5710 Invalid User Attempts
 
 A Wazuh Threat Hunting view filtered to Rule 5710 shows:
 
-- 43 hits in a one hour window
-- Rule description: `sshd: Attempt to login using a non-existent user`
-- Wazuh level 5
-- Agent: `vultr-security-lab`
+* 43 hits in a one hour window
+* Rule description: `sshd: Attempt to login using a non-existent user`
+* Wazuh level 5
+* Agent: `vultr-security-lab`
 
-This supports the conclusion that the public SSH service was receiving repeated username probing/authentication attempts.
+**Publication status:** sanitized screenshot prepared, GitHub image file still pending.
 
-### 2. Rule 5712: correlated brute force activity
+### AUTH 04: Rule 5712 Brute Force Correlation
 
 A four week Wazuh query filtered to Rule 5712 shows two correlated alerts:
 
-- 15 Oct 2026
-- 4 Nov 2026
-- Rule description: `sshd: brute force trying to get access to the system. Non existent user.`
-- Wazuh level 10
+* 15 Oct 2026
+* 4 Nov 2026
+* Rule description: `sshd: brute force trying to get access to the system. Non existent user.`
+* Wazuh level 10
 
-This is stronger evidence than inferring brute force from dashboard counters because the Wazuh correlation rule itself fired.
+**Publication status:** sanitized screenshot prepared, GitHub image file still pending.
 
-### 3. Host authentication log correlation
+### AUTH 05: Fail2Ban Response
 
-The host `/var/log/auth.log` capture shows:
+The `sshd` jail is active. A captured status check shows thousands of cumulative failures, 265 cumulative bans, and one source currently banned at capture time.
 
-- repeated `Invalid user` and pre authentication disconnect messages from public IP addresses
-- attempts using names such as `admin`, `ubuntu`, `default`, `support`, and other invalid accounts
-- a successful public key login for the known administrative account from a private Tailscale peer
-- subsequent `sudo` session activity by that administrator
+These values are point in time observations and will change while the service remains active.
 
-The distinction between public hostile sources and the known private administrative source is important. A successful login event is not automatically suspicious without source and authentication context.
+**Publication status:** sanitized screenshot prepared, GitHub image file still pending.
 
-### 4. Fail2Ban response
+---
 
-The `sshd` jail is active. A captured status check shows:
+## Host Authentication Correlation
 
-- thousands of cumulative failed attempts
-- 265 cumulative bans
-- one source currently banned at capture time
+The reviewed host authentication log shows:
 
-The exact cumulative failure counter can change between captures because the service remains live. The portfolio should therefore treat these numbers as **point in time observations**, not permanent totals.
+* repeated `Invalid user` and pre authentication disconnect messages from public IP addresses,
+* attempts using names such as `admin`, `ubuntu`, `default`, and `support`,
+* a successful public key login for the known administrative account from a private Tailscale peer,
+* subsequent sudo session activity by that administrator.
 
-### 5. UFW exposure context
+This distinction matters. A successful login is not automatically suspicious without source, authentication method, and account context.
 
-UFW is active and default deny is enabled for incoming traffic, but TCP/22 is explicitly allowed from Anywhere for IPv4 and IPv6. This explains why unsolicited internet SSH attempts continue to reach the service.
+## UFW Exposure Context
 
-Fail2Ban is a reactive control. It does not make public SSH equivalent to source restricted administrative access.
+UFW is active and default deny incoming is enabled, but TCP/22 is explicitly allowed from Anywhere for IPv4 and IPv6. This explains why unsolicited internet SSH attempts continue to reach the service.
+
+Fail2Ban is a reactive control. It is not equivalent to source restricting SSH at the firewall.
 
 ## Analyst Assessment
 
-**Finding:** The endpoint is exposed to routine but genuine internet SSH credential probing. Wazuh captures both individual invalid user attempts and correlated brute force behavior. Fail2Ban actively blocks repeated sources.
+**Finding:** the endpoint is receiving genuine internet SSH credential probing. Wazuh captures individual invalid user attempts and correlated brute force behavior. Fail2Ban actively blocks repeated sources.
 
-**Compromise assessment:** No evidence in the supplied artifacts proves a successful unauthorized login or host compromise.
+**Compromise assessment:** no supplied artifact proves successful unauthorized access or host compromise.
 
-**Administrative activity:** A known public key login over the private Tailscale path and subsequent sudo events are visible in the host logs and should be separated from hostile public attempts during triage.
+**Administrative activity:** known public key administration over the private management path and subsequent sudo activity should be separated from hostile public traffic during triage.
 
 ## Recommended Follow Up
 
-1. Preserve one sanitized Wazuh Rule 5710 event and one Rule 5712 event with source fields.
-2. Correlate one banned source across Wazuh, host auth logs, and Fail2Ban.
-3. Decide whether public SSH exposure is intentional for the lab.
-4. If not intentional, restrict SSH to the management path and document the before and after telemetry.
-5. Verify effective SSH hardening with `sshd -t` and `sshd -T`.
-6. Continue monitoring for successful authentication events from unrecognized sources.
+1. Commit the sanitized Rule 5710 screenshot.
+2. Commit the sanitized Rule 5712 screenshot.
+3. Commit the sanitized Fail2Ban screenshot.
+4. Commit the endpoint state and sudo screenshots if they add useful context.
+5. Correlate one hostile source across Wazuh, host logs, and Fail2Ban.
+6. Decide whether public SSH exposure remains intentional for the lab.
+7. Verify effective SSH hardening with `sshd -t` and `sshd -T`.
 
 ## Hiring Manager Takeaway
 
-This case demonstrates the analyst behavior that matters more than raw alert counts: validating query scope, correlating SIEM events with host logs, distinguishing legitimate administration from hostile activity, documenting a defensive control, and refusing to claim compromise without evidence.
+The strongest part of this case is not the raw alert count. It is the analyst workflow: validating query scope, correlating SIEM events with host logs, distinguishing legitimate administration from hostile activity, documenting a defensive response, and refusing to claim compromise without evidence.
