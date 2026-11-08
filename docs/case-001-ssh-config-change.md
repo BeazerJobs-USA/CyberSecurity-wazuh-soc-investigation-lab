@@ -15,6 +15,14 @@
 
 Changes to `/etc/ssh/sshd_config` or its drop-ins can change who can log in and how. The case starts from a real alert from a rule I wrote, checks what the dashboard actually proves, and stops short of a disposition the evidence can't support. It also produced a real troubleshooting result: the alert's description was blank, which exposed a bug in my rule template.
 
+## What this case demonstrates
+
+This case is useful because the detection itself became part of the investigation. I was not only reviewing a Wazuh alert; I was evaluating whether the rule I wrote gave me enough information to investigate the event properly.
+
+The first live alert exposed a weakness in my own rule design: the description rendered without the context I expected. I corrected the template, narrowed the path logic in later revisions, and documented the exact evidence still needed before I would call the change authorized or malicious.
+
+That is the main skill demonstrated here: **building a detection, testing it against real telemetry, finding where it falls short, and improving the detection instead of trusting it because it fired.**
+
 ---
 
 ## Evidence
