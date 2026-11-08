@@ -10,6 +10,14 @@
 | **Expected** | For each sudo: Rule 5501 *PAM: Login session opened* → Rule 5402 *Successful sudo to ROOT executed* → Rule 5502 *PAM: Login session closed*, all level 3. |
 | **Result** | **Observed.** The pattern appears for every sudo in the window, and each of the five sudo-to-root alerts lines up with a command I ran and captured. |
 
+## Why this case matters
+
+I used a known administrative action as a controlled test so I could follow privileged activity from the Linux command line into the SIEM.
+
+Instead of treating every `sudo` alert as suspicious, I generated the activity myself, identified the corresponding PAM session and Rule 5402 events, and reconciled the alerts with commands I knew I had run.
+
+This case demonstrates two things at once: **end to end telemetry validation** and **analyst context**. A privileged event can look serious in isolation, but the investigation changes when the source, timing, and command are known and authorized.
+
 ---
 
 ## Evidence
