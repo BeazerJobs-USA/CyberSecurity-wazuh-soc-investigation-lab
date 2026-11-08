@@ -1,7 +1,7 @@
 <div align="center">
 
 # Enterprise SOC Investigation Lab
-### Wazuh detection engineering and SSH investigations on a cloud Linux host
+### From real internet SSH activity to defensible SOC conclusions
 
 [![SIEM](https://img.shields.io/badge/SIEM-Wazuh%204.14-0284c7?style=for-the-badge&logo=wazuh&logoColor=white)](https://wazuh.com/)
 [![Overlay](https://img.shields.io/badge/Overlay-Tailscale-10b981?style=for-the-badge&logo=tailscale&logoColor=white)](architecture/README.md)
@@ -16,7 +16,7 @@
 
 <br/>
 
-**George Beazer** · Cybersecurity student, senior at KSU · Student homelab: one monitored endpoint, one Wazuh manager. Not a production SOC.
+**George Beazer** · Cybersecurity student, senior at KSU · Linux security monitoring, detection engineering, and evidence based investigation
 
 [At a glance](#at-a-glance) • [Architecture](#architecture) • [Cases](#investigation-cases) • [Rules](#custom-detection-rules) • [Evidence](#evidence) • [Lessons](#what-i-got-wrong-and-fixed) • [Status](#status)
 
@@ -24,12 +24,54 @@
 
 ---
 
+## 🎯 Why I built this lab
+
+I built this lab to practice the part of SOC work that happens **after an alert appears**.
+
+I deployed a Linux server in Vultr, connected it to a Wazuh SIEM running on AWS, administered the environment through Tailscale, wrote custom detections for security sensitive SSH configuration changes, and monitored an SSH service that was reachable from the public internet.
+
+The host began receiving real automated SSH probing. Instead of treating every alert as a breach, I worked through the evidence the way I would want to approach it in a SOC: start with the SIEM, validate the alert against the host, separate my own activity from outside activity, determine what the evidence actually proves, and only then make a security decision.
+
+The result was not a dramatic compromise. The result was more useful: I learned how to distinguish **real hostile activity, benign administrator activity, controlled testing, detection problems, and evidence gaps** without forcing the data into a more exciting story than it supported.
+
+> **The purpose of this lab is not to manufacture an attack. It is to show how I investigate imperfect telemetry, troubleshoot detections, and make defensible security decisions.**
+
+## 🚨 The investigation story
+
+The strongest investigation began with repeated SSH alerts from my internet exposed Linux endpoint.
+
+Wazuh Rule 5710 recorded repeated attempts to use usernames such as `admin`, `ubuntu`, `jenkins`, `centos`, and `root`. Rule 5712 separately identified concentrated repeated activity. Fail2Ban was also actively responding to repeat sources.
+
+I did not stop at the dashboard.
+
+I compared Wazuh events against `/var/log/auth.log`, converted between dashboard local time and host UTC, identified which events came from public sources, separated my own Tailscale administration and deliberate `fakeuser` test, and tied one public source to a Fail2Ban ban.
+
+That process also exposed an important analyst lesson: **alert counts are not the same as attempts, and attempts are not the same as attackers.** One test login generated two Wazuh alerts, so simply reporting "43 alerts" as "43 attacks" would have been wrong.
+
+The evidence I reviewed showed genuine internet probing and active defensive response, but it did **not** show a successful unauthorized login. That became the disposition: a true positive for hostile probing, with no compromise demonstrated in the reviewed evidence.
+
+## 🧠 What sets this lab apart
+
+This project is not just a Wazuh installation walkthrough. The work demonstrates how I approach an investigation when the evidence is incomplete or potentially misleading:
+
+* **I go back to the host.** I correlate SIEM alerts with Linux authentication logs, sudo activity, service state, and Fail2Ban instead of relying on one dashboard.
+* **I separate my own activity from hostile activity.** My Tailscale login, sudo commands, and controlled tests are identified before I classify internet traffic.
+* **I write and troubleshoot detections.** I created custom FIM rules for OpenSSH configuration changes and corrected problems when the first version did not provide useful alert context.
+* **I challenge dashboard assumptions.** A filtered counter showing zero authentication failures does not mean the host had none.
+* **I test my own evidence standard.** A script log proves that a test ran; it does not prove the SIEM generated the expected alert.
+* **I tune instead of overclaiming.** I narrowed an overly broad rule pattern, corrected a blank alert description, and left cases unresolved when the available artifacts could not support a final conclusion.
+* **I document what would close the gap.** Each unresolved finding includes the exact command, field, or capture I would collect next.
+
+That combination of Linux administration, detection engineering, troubleshooting, log correlation, and evidence based reasoning is the main skill story behind the repository.
+
+---
+
 <a id="at-a-glance"></a>
 ## 🛡️ At a glance
 
-**What I built.** An Ubuntu 26.04 server on **Vultr** runs the **Wazuh agent (v4.14.8)** and reports to a **Wazuh manager on AWS EC2**. I reach both over a **Tailscale** overlay. The server's SSH port is open to the internet, so it attracts real scanning. I wrote **custom Wazuh FIM rules** for OpenSSH configuration changes and investigated what the SIEM captured.
+**What I built.** An Ubuntu 26.04 security lab endpoint on **Vultr** runs the **Wazuh agent (v4.14.8)** and reports to a **Wazuh manager on AWS EC2**. I administer the environment over a **Tailscale** overlay. Public SSH exposure provided real background internet traffic for authentication analysis, while custom **Wazuh FIM rules** let me monitor security sensitive OpenSSH configuration changes.
 
-**What I investigated.**
+**What I investigated and learned.**
 
 | Case | What happened | Status |
 |:---|:---|:---|
@@ -38,9 +80,9 @@
 | [003](docs/case-003-ssh-authentication-attacks.md) | Real internet SSH probing. I correlated visible Rule 5710 alerts with `auth.log`, observed separate Rule 5712 alerts, matched one source to a Fail2Ban ban, and separated my own test traffic. | **Observed** · true positive, no compromise seen in reviewed data |
 | [004](docs/case-004-sudo-detection-validation.md) | A controlled sudo test traced into Wazuh (5501 → 5402 → 5502); every sudo alert matched to a command I ran | **Observed** |
 
-**Skills shown:** Wazuh rule writing (XML, PCRE2), file integrity monitoring, SIEM-to-host log correlation across time zones, alert scoping, Linux administration (sshd, sudo, Fail2Ban), evidence handling and redaction.
+**Skills demonstrated:** Wazuh rule writing with XML and PCRE2, file integrity monitoring, SSH and authentication analysis, SIEM to host log correlation across time zones, Linux administration, sudo and PAM telemetry, Fail2Ban response analysis, detection tuning, evidence handling, redaction, and analyst disposition.
 
-**Still pending:** native rule validation (`wazuh-analysisd -t`), FIM lifecycle alert captures, `sshd -T`, UFW and agent-connection captures, and a review of all successful SSH logins.
+The remaining validation work is tracked later in the repository so the opening can focus on what has already been built, investigated, and learned.
 
 ---
 
@@ -67,7 +109,9 @@ Full component and connection list, and the captures that would close each gap: 
 <a id="investigation-cases"></a>
 ## 🔎 Investigation cases
 
-### Case 003: Internet SSH probing (strongest case)
+### Case 003: Internet SSH probing and response (strongest case)
+
+This case best represents the investigation process I wanted to practice. Real public SSH traffic reached the endpoint, Wazuh surfaced it, and I used host logs and Fail2Ban to determine what the alerts actually meant instead of treating the alert count as the conclusion.
 
 In one hour, Rule 5710 fired 43 times. I matched every visible alert that falls inside my 11-minute `auth.log` slice to its log line, about one second apart once time zones are converted (dashboard Eastern, host UTC). The source addresses were many and spread out: 12 in 11 minutes, trying `admin`, `ubuntu`, `jenkins`, `root` and similar names. Rule 5712 (same source, repeated within two minutes) fired only twice in four weeks.
 
@@ -78,17 +122,17 @@ Two of the 43 alerts were **mine**: a `fakeuser` test from my own Tailscale addr
   <br/><sub><b>AUTH-03.</b> Host side: <code>wazuh-agent</code> and <code>fail2ban</code> active; 11 minutes of <code>auth.log</code> (UTC) with internet probing, my key login, my sudo commands and my <code>fakeuser</code> test; Fail2Ban 8,439 failed / 265 banned. <i>Does not show:</i> history beyond those 11 minutes, or Fail2Ban thresholds.</sub>
 </div>
 
-### Case 004: Controlled sudo test
+### Case 004: Following privileged activity from command to SIEM
 
-I ran `sudo id` and `sudo whoami` and found each in Wazuh as 5501 → 5402 → 5502. Then I matched all five sudo-to-root alerts in the hour to commands I ran: one directly through its host log line, four by order and timing. The test also showed that sudo never asked for a password, which I still need to confirm and decide on.
+I deliberately generated known privileged activity so I could trace how a real Linux action becomes Wazuh telemetry. I ran `sudo id` and `sudo whoami` and found each in Wazuh as 5501 → 5402 → 5502. Then I matched all five sudo-to-root alerts in the hour to commands I ran: one directly through its host log line, four by order and timing. The test also showed that sudo never asked for a password, which I still need to confirm and decide on.
 
-### Case 001: FIM alert on an SSH config change
+### Case 001: Building and debugging my own SSH configuration detection
 
-Rule 100100 fired once, about an hour after the agent was enrolled. Its description rendered blank, which led me to replace `$(agent.name)` with `$(file)`. The historical v1 rule file and the expanded event are not available, so the original parent rule, changed path, change details, and actor remain unverified. The disposition stays pending. I also found that EV-03 does not include the alert (it holds only Level 3 events, and its time axis ends at about 00:57), and re-labelled it.
+This case started with a custom detection I wrote and became a detection engineering troubleshooting exercise. Rule 100100 fired once, about an hour after the agent was enrolled. Its description rendered blank, which led me to replace `$(agent.name)` with `$(file)`. The historical v1 rule file and the expanded event are not available, so the original parent rule, changed path, change details, and actor remain unverified. The disposition stays pending. I also found that EV-03 does not include the alert (it holds only Level 3 events, and its time axis ends at about 00:57), and re-labelled it.
 
-### Case 002: FIM lifecycle test
+### Case 002: Learning the difference between test execution and detection evidence
 
-The test log proves the script ran. It does not prove Wazuh alerted, and the run predates the current agent's enrollment, so it is marked for a re-run.
+I created a safe create, modify, and delete test for the SSH drop in directory so I could validate the full FIM lifecycle without changing SSH behavior. The test log proves the script ran. It does not prove Wazuh alerted, and the run predates the current agent's enrollment, so it is marked for a re-run.
 
 ---
 
@@ -149,7 +193,7 @@ Full index with scope and limits for every capture: [evidence/README.md](evidenc
 ---
 
 <a id="what-i-got-wrong-and-fixed"></a>
-## 🧠 What I got wrong and fixed
+## 🧠 How I challenged and improved my own work
 
 1. **Blank alert description.** My v1 rule used `$(agent.name)`, which rendered empty (EV-01). I switched to the decoded FIM field `$(file)`. The fix is not yet seen in a live alert.
 2. **Real-time FIM on a single file.** Wazuh real-time monitoring works on directories, so I moved the reference config to watch `/etc/ssh` and let the rule pattern narrow the paths.
