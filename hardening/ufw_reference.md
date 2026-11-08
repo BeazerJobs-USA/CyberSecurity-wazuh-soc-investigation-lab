@@ -1,49 +1,49 @@
-# Host Firewall (UFW) Reference and Observed State
+# Host Firewall (UFW): Reference and Evidence Status
 
-## Current Observed State
+## What the repository can prove today
 
-A November 2026 terminal capture shows:
+| Statement | Evidence | Status |
+|:---|:---|:---:|
+| SSH (TCP/22) is reachable from the internet | `auth.log` in AUTH-03 shows connections from many public addresses, including one logged as a connection *to* the host's public IP | **Verified** |
+| Fail2Ban is active and banning SSH sources | `systemctl is-active fail2ban` and `fail2ban-client status sshd` in AUTH-03 / AUTH-04 | **Verified** |
+| UFW is active, default deny incoming | No `ufw status verbose` capture in the repository | **Not yet captured** |
+| UFW allows TCP/22 from Anywhere (IPv4/IPv6) | No capture | **Not yet captured** |
+| UFW allows TCP/3389 on `tailscale0` | No capture | **Not yet captured** |
 
-- UFW status: **active**
-- Default incoming policy: **deny**
-- Default outgoing policy: **allow**
-- TCP/22: **allowed from Anywhere** for IPv4 and IPv6
-- TCP/3389: allowed on `tailscale0` for IPv4 and IPv6
+The UFW details above were noted from an earlier terminal session, but that capture was never committed. Until it is, this repository does not claim them as observed. To close the gap, add a sanitized `sudo ufw status verbose` screenshot or run `scripts/collect_lab_evidence.sh`.
 
-This is an important distinction: the firewall is active and default-deny, but SSH is still publicly reachable because TCP/22 is explicitly allowed from anywhere. That exposure is consistent with the real SSH scanning and brute-force telemetry observed in Wazuh and Fail2Ban.
+If TCP/3389 really is open on `tailscale0`, document why (for example, xrdp for remote desktop over the tailnet) and confirm it is not reachable on the public interface.
 
-Fail2Ban is also active and is applying reactive blocking to repeated SSH failures. Fail2Ban is a useful control, but it is not equivalent to source-restricting SSH at the firewall.
+## Why the exposure matters
 
-## Target Hardening Baseline
+Public SSH explains the internet probing seen in Case 003. Fail2Ban is a *reactive* control: it bans a source only after it has already failed several times. Limiting SSH by source at the firewall is a *preventive* control. They are not equivalent.
 
-For a stricter administrative posture, restrict SSH to a known management source or private overlay where operationally feasible:
+## Target baseline (if public SSH is no longer needed)
+
+Restrict SSH to the Tailscale interface so it is reachable only from the tailnet:
 
 ```bash
+# Run these from a session that does NOT depend on the rule you are removing.
 sudo ufw default deny incoming
 sudo ufw default allow outgoing
-
-# Example only. Validate your management path before applying.
-sudo ufw allow from <ADMIN_MANAGEMENT_IP> to any port 22 proto tcp
-
-sudo ufw enable
+sudo ufw allow in on tailscale0 to any port 22 proto tcp
+sudo ufw delete allow 22/tcp        # removes the "Anywhere" rule (use "delete allow OpenSSH" if it was added by app name)
 sudo ufw status numbered
 sudo ufw status verbose
 ```
 
-If the lab intentionally keeps public SSH reachable to collect authentication telemetry, document that as a deliberate lab exposure and maintain compensating controls such as key-based authentication, Fail2Ban, monitoring, and regular review.
+If public SSH is kept on purpose to collect authentication telemetry, say so in the README as a deliberate lab exposure, and keep the compensating controls: key-only authentication (confirm with `sshd -T`), Fail2Ban, Wazuh monitoring, and regular review of successful logins.
 
-## Wazuh Agent Connectivity
+## Wazuh agent connectivity
 
-Use current Wazuh terminology: the Linux service/process is `wazuh-agent` / `wazuh-agentd`, not `ossec-agentd`.
+Use current Wazuh names: the service is `wazuh-agent` and the process is `wazuh-agentd` (not `ossec-agentd`).
 
-The lab uses a Tailscale overlay for cross-cloud connectivity. Verify the exact manager address and ports from the live agent configuration before documenting network paths as an absolute statement.
+The Wazuh manager records this agent's IP as an address in Tailscale's `100.64.0.0/10` range (EP-01). That supports "the agent talks to the manager over Tailscale", but the agent's `<server>` block and an `ss -tnp` line for the manager connection have not been captured yet. See `architecture/README.md`.
 
-## Evidence Collection
-
-Run:
+## Evidence collection
 
 ```bash
 bash scripts/collect_lab_evidence.sh
 ```
 
-The script collects and redacts a point-in-time snapshot of service state, UFW, Tailscale, Fail2Ban, SSH effective settings, and listening services. Review the output before committing it.
+The script collects a point-in-time snapshot (time sync, service state, Wazuh manager connection, FIM config, `sshd -T`, UFW, Fail2Ban thresholds, Tailscale, listening services) and replaces IP addresses with class-preserving tokens. Review the output before committing it.

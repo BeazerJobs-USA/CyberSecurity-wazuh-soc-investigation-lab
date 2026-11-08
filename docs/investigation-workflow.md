@@ -1,116 +1,127 @@
-# SOC Investigation Workflow and Triage Runbook
+# Triage Runbook: SSH Configuration FIM Alerts and SSH Authentication Alerts
 
 ## Overview
 
-This runbook defines a defensible workflow for Wazuh FIM and SSH authentication alerts on the lab endpoint. It separates what the SIEM proves from what must be corroborated on the host.
+This is the workflow I follow on this lab for Wazuh FIM alerts on the SSH configuration and for SSH authentication alerts. Each step separates what the SIEM proves from what has to be confirmed on the host.
 
 ```text
-Detection -> Rule Match -> Dashboard Triage -> Host Correlation -> Disposition -> Remediation
+Alert -> check query scope -> read raw fields -> line up times -> correlate host evidence
+      -> separate my own activity -> state gaps -> disposition -> response
 ```
 
-## 1. FIM Detection Phase
+## 0. Before anything: scope and time
 
-The custom OpenSSH configuration rules are children of Wazuh's built-in FIM rules:
+- **Write down the query scope** shown in the capture: query text, every filter pill, and the time window. Dashboard counters (Authentication failure/success, Level 12+) are computed *inside* those filters. A dashboard filtered to `rule.id:100100` or `rule.id:5402` showing "0 authentication failures" says nothing about the host. EV-02 and PRIV-04 are examples.
+- **Line up time zones.** The dashboard shows browser local time (Eastern here); host logs are UTC. On 5 Nov, dashboard 11:43 = host 16:43. Wazuh's `timestamp` is the manager's processing time, about one second after the host log line in these captures. Setting the dashboard timezone to UTC (Dashboard Management → Advanced settings → `dateFormat:tz`) removes this step.
 
-- Rule 550: file integrity/checksum changed
-- Rule 554: file added
-- Rule 553: file deleted
-- Rule 100100: custom SSH configuration modification, Level 8
-- Rule 100101: custom SSH configuration addition, Level 7
-- Rule 100102: custom SSH configuration deletion, Level 7
+## 1. FIM detection
 
-The repository reference uses directory-based real-time monitoring because Wazuh real-time monitoring applies to directories:
+The custom OpenSSH rules are children of Wazuh's built-in FIM rules:
+
+| Rule | Meaning | Level |
+|:---|:---|:---:|
+| 550 | Integrity checksum changed (built-in) | 7 |
+| 554 | File added (built-in) | 5 |
+| 553 | File deleted (built-in) | — |
+| 100100 | SSH config modified (custom, child of 550) | 8 |
+| 100101 | SSH config drop-in added (custom, child of 554) | 7 |
+| 100102 | SSH config drop-in deleted (custom, child of 553) | 7 |
+
+Real-time FIM works on directories, not single files (Wazuh syscheck reference), so the reference config watches `/etc/ssh`:
 
 ```xml
 <directories check_all="yes" report_changes="yes" realtime="yes">/etc/ssh</directories>
 ```
 
-The custom rule regex then narrows matching to:
+The custom rules then narrow alerts to the files sshd actually loads:
 
 ```regex
-^/etc/ssh/sshd_config($|\.d/.*)
+^/etc/ssh/sshd_config(\.d/[^/]+\.conf)?$
 ```
 
-## 2. Dashboard Triage
+## 2. Read the raw fields of a FIM alert
 
-For a Rule 100100 event:
+Query: `rule.id:100100 AND agent.name:"vultr-security-lab"`, then expand the event:
 
-```text
-rule.id:100100 AND agent.name:"vultr-security-lab"
-```
+1. `syscheck.path`: which file. Main config, a drop-in, or something else?
+2. `syscheck.event`: added, modified or deleted.
+3. `syscheck.mode`: `realtime`, `scheduled` or `whodata`. This proves which FIM mode was live.
+4. `syscheck.changed_attributes`, `size_before`/`size_after`, `sha256_before`/`sha256_after`.
+5. `syscheck.diff`, only if present. Don't claim a diff exists until you see it.
+6. `syscheck.uname_after`: the file owner, which is **not** the person who changed it.
+7. Then remove the rule filter and look at everything from the host in the surrounding minutes.
 
-Review:
+## 3. SSH authentication alerts
 
-1. Timestamp and event count.
-2. Rule ID and level.
-3. Decoded `file` path.
-4. `syscheck.diff` only if the field is actually present.
-5. Hash and file metadata fields if present.
-6. Wider host activity without keeping the Rule 100100 filter applied.
+Default Wazuh rules seen in this lab's captures:
 
-> A dashboard filtered to Rule 100100 cannot be used to conclude that the host had zero authentication failures. Query scope must always be documented.
+| Rule | Meaning | Level | Seen in |
+|:---|:---|:---:|:---|
+| 5710 | sshd: attempt to log in using a non-existent user | 5 | AUTH-01 |
+| 5712 | sshd: brute force (composite: 5710 repeating from the same source IP in a short window) | 10 | AUTH-02 |
+| 5501 / 5502 | PAM login session opened / closed (here, around each sudo) | 3 | PRIV-02 |
+| 5402 | Successful sudo to ROOT executed | 3 | PRIV-02/03/04 |
 
-## 3. SSH Authentication Triage
+**Not yet captured:** the sshd authentication-success rule. Reviewing successful logins is the most important missing step in Case 003.
 
-Useful default Wazuh SSH rules observed in the lab include:
+Then:
 
-- Rule 5710, Level 5: attempt to log in using a non-existent user.
-- Rule 5712, Level 10: correlated brute-force attempts against non-existent users.
-- Rule 5715, Level 3: successful SSH authentication, when present.
-- Rule 5402, Level 3: successful sudo to root.
+- Match alerts to `/var/log/auth.log` lines (or `journalctl -u ssh`) by time and source.
+- **Alert counts are not attempt counts.** In Case 003 one attempt produced two 5710 alerts. Use `/var/ossec/bin/wazuh-logtest` on the manager to see which rule each log line hits.
+- **Separate your own activity.** Sources in `100.64.0.0/10` are tailnet devices. My admin workstation produced an accepted key login, sudo commands and a deliberate `fakeuser` test in the same window as internet probing. A typo in an admin login looks exactly like an attack line; source context tells them apart.
+- `[preauth]` means the connection ended before authentication finished. `Failed password` lines mean a password was actually tried.
 
-Correlate SIEM events with `/var/log/auth.log` or `journalctl -u ssh`, and distinguish public hostile sources from known administrative Tailscale peers.
+## 4. Host verification
 
-## 4. Host Verification
+### SSH syntax and effective settings
 
-### SSH syntax
 ```bash
 sudo sshd -t
-```
-
-### Effective configuration
-```bash
 sudo sshd -T | grep -E '^(permitrootlogin|passwordauthentication|pubkeyauthentication|kbdinteractiveauthentication|permitemptypasswords|maxauthtries|x11forwarding) '
 ```
 
-`sshd -T` reports the effective configuration after OpenSSH processes its configuration sources. Do not describe this as configuration “in memory.”
+`sshd -T` reads the configuration files on disk and prints what sshd *would* use if it started now. If a file changed and sshd was not reloaded, the running daemon may still be using the old settings, so check when `ssh.service` last started or reloaded.
 
 ### Service and control state
+
 ```bash
-sudo systemctl is-active wazuh-agent
-sudo systemctl is-active tailscaled
-sudo systemctl is-active ssh
-sudo systemctl is-active fail2ban
-sudo systemctl is-active auditd
+sudo systemctl is-active wazuh-agent tailscaled ssh fail2ban auditd
 sudo ufw status verbose
 sudo fail2ban-client status sshd
+for k in maxretry findtime bantime ignoreip; do sudo fail2ban-client get sshd "$k"; done
 tailscale status
+timedatectl
 ```
 
-## 5. Disposition Standard
+Or run `scripts/collect_lab_evidence.sh`, which gathers all of this with IP addresses tokenized.
 
-A final disposition should identify:
+## 5. Disposition standard
 
-- what happened,
-- which rule/event supports the finding,
-- affected asset,
-- source/actor evidence if available,
-- whether activity was authorized,
-- containment already applied,
-- remaining evidence gaps.
+A disposition states:
 
-Do not call an event benign merely because it carries an administrative ATT&CK tag, and do not call a configuration change malicious solely because it triggered FIM.
+- what happened, and which rule or event shows it,
+- the affected asset,
+- the source or actor, if known,
+- whether the activity was authorized, and how you know,
+- any containment already in place,
+- the remaining evidence gaps.
 
-## 6. Response Guidance
+Terms I use:
 
-For suspected unauthorized SSH configuration changes:
+- **True positive:** the alert correctly describes what happened (for example, internet probing).
+- **Benign true positive:** correct alert on expected or authorized activity (for example, my own `fakeuser` test, or my own sudo).
+- **False positive:** the alert fired on something that did not happen as described.
 
-1. Preserve the active administrative session to avoid lockout.
-2. Export the Wazuh alert/event before altering the system.
-3. Review the changed file and any available diff.
-4. Correlate auth/audit records.
-5. Restore a trusted baseline if unauthorized.
+Don't call an event benign because it carries an admin-looking ATT&CK tag (T1548.003 is on every successful sudo-to-root), and don't call a config change malicious just because FIM fired.
+
+## 6. Response, if an SSH config change is unauthorized
+
+1. Keep your current admin session open, so a lockout can't strand you.
+2. Export the Wazuh alert before changing anything on the host.
+3. Review the changed file and any diff.
+4. Correlate sudo, auth and FIM records for the minutes around the change.
+5. Restore a known-good copy if the change was unauthorized.
 6. Run `sshd -t` before reloading SSH.
-7. Review authorized keys and PAM configuration.
-8. Tighten UFW exposure as appropriate.
+7. Review `authorized_keys`, PAM configuration and sudoers.
+8. Restrict SSH exposure (for example, to `tailscale0`).
 9. Rotate administrative keys if compromise is suspected.

@@ -1,63 +1,77 @@
-# Technical Evidence Index and Provenance Record
+# Evidence Index
 
-## Evidence Integrity Policy
+Every screenshot here is treated as evidence. For each one the index records the **scope** (view, query, filters, time window), **what it shows**, and **what it does not prove**. Full captions are on the case pages.
 
-This repository separates **observed telemetry**, **scripted test execution**, and **planned validation**. A file is not labeled verified merely because a script expected an alert to occur.
+## Evidence states used in this repository
 
-### Evidence categories
+| State | Meaning |
+|:---|:---|
+| **Verified / Observed** | Directly visible in a capture from the running lab |
+| **Supported** | Indirect evidence points to it, but the direct proof has not been captured |
+| **Test recorded** | A controlled action was logged, but its expected alert has not been captured |
+| **Authored** | Config or code exists in the repo; not validated on the live system |
+| **Not captured / Pending** | Claimed or planned, with no artifact yet |
+| **Planned** | Future work |
 
-- **Observed evidence**: screenshots or terminal captures produced by the live lab.
-- **Test execution evidence**: records proving that a controlled test action was performed.
-- **Pending verification**: a configuration, rule, or conclusion that still needs direct supporting output.
-- **Reference configuration**: hardened or corrected examples that are not automatically treated as the current live configuration.
+## Time conventions
 
-## 1. Case 001: Wazuh FIM SSH Configuration Change
+- Wazuh dashboard captures show **browser local time** (US Eastern). 14 Oct is EDT (UTC−4); 5 Nov is EST (UTC−5).
+- Host log captures (`auth.log`) show **UTC** (`+00:00`).
+- The Case 002 timeline is **UTC** (`Z`).
+- Wazuh's `timestamp` is when the manager processed the event. In these captures it is about one second after the host log line.
 
-| ID | Artifact | What it proves | What it does not prove |
-|:---:|:---|:---|:---|
-| EV 01 | `observed/01_rule100100_events_view.png` | Rule 100100 fired once at Level 8 for `vultr-security-lab` | Exact changed directive, actor, or authorization |
-| EV 02 | `observed/02_rule100100_dashboard_view.png` | One Rule 100100 alert in the filtered one hour view | Absence of host wide authentication failures |
-| EV 03 | `observed/03_sshd_config_search_24h.png` | 19 Level 3 sudo related events were returned by the search | That all 19 events were benign or tied to the Rule 100100 event |
+---
 
-## 2. Case 002: Safe FIM Lifecycle Test
+## Case 001: Rule 100100 SSH configuration alert
 
-`demo/fim_demo_timeline.txt` records controlled create, modify, and delete actions against:
+| ID | File | Scope | Shows | Does not prove |
+|:---|:---|:---|:---|:---|
+| EV-01 | `observed/01_rule100100_events_view.png` | Events · `rule.id:100100` · agent vultr-security-lab · 14 Oct 01:01–02:01 local | One Level 8 Rule 100100 alert at 01:48:49; blank description variable | Parent rule, actual file/change, actor or authorization |
+| EV-02 | `observed/02_rule100100_dashboard_view.png` | Dashboard · same filter · last 1 h | Total 1; no ATT&CK tag on the custom rule | Anything about host-wide authentication (counters are filter-scoped) |
+| EV-03 | `observed/03_sshd_config_search_24h.png` | Dashboard · free text `sshd_config` · 24 h ending ≈00:57 · date not shown | 19 Level 3 sudo-tagged (T1548.003) events | Anything about the 01:48:49 alert, which is not in this view |
 
-`/etc/ssh/sshd_config.d/99-fim-demo.conf`
+## Case 002: FIM lifecycle test
 
-The file contains **expected** custom rule IDs. It does not contain Wazuh alert records. Therefore:
+| ID | File | Shows | Does not prove |
+|:---|:---|:---|:---|
+| DEMO-01 | `demo/fim_demo_timeline.txt` | Create/modify/delete actions at 02:15–02:16 UTC, 14 Oct | Any Wazuh alert; that the run happened against the current agent enrollment (it predates the registration time in EP-01) |
 
-| Action | Expected rule | Current evidence status |
-|:---|:---:|:---|
-| Create | 100101 | Test action recorded; Wazuh alert capture pending |
-| Modify | 100100 | Test action recorded; v2 alert capture pending |
-| Delete | 100102 | Test action recorded; Wazuh alert capture pending |
+## Case 003: Internet SSH probing
 
-See `demo/README.md` for the verification checklist.
+| ID | File | Scope | Shows | Does not prove |
+|:---|:---|:---|:---|:---|
+| AUTH-01 | `observed/04_auth01_rule5710_invalid_user_1h.png` | Events · `rule.id: 5710` · 5 Nov 10:58–11:58 EST | 43 invalid-user alerts, level 5 | 43 attackers or attempts (2 alerts are my own test; one attempt can make 2 alerts); any success |
+| AUTH-02 | `observed/05_auth02_rule5712_bruteforce_4w.png` | Events · `rule.id: 5712` · 8 Oct–5 Nov | 2 composite alerts (15 Oct, 4 Nov), level 10 | Source IPs; password guessing; access |
+| AUTH-03 | `observed/06_auth03_authlog_fail2ban_terminal.png` | Endpoint terminal, captured 12:01 EST · `auth.log` 16:34–16:45 UTC | wazuh-agent and fail2ban active; 12 public sources; my key login, sudo commands and `fakeuser` test; Fail2Ban 8,439 failed / 265 banned / 80.94.92.55 banned | History beyond 11 minutes; Fail2Ban thresholds; counter start time |
+| AUTH-04 | `observed/07_auth04_fail2ban_status_followup.png` | Endpoint terminal, ≈12:09 EST | 8,449 failed / 265 banned; 80.94.92.55 still banned | Configured ban time |
 
-## 3. Case 003: SSH Authentication Attack Investigation
+## Endpoint state
 
-New November 2026 captures document real unsolicited SSH authentication activity and defensive response on the lab endpoint.
+| ID | File | Scope | Shows | Does not prove |
+|:---|:---|:---|:---|:---|
+| EP-01 | `observed/08_ep01_agent_overview.png` | Endpoints → agent 001 · panels last 1 h · 5 Nov ≈12:45 EST | Active; agent IP in Tailscale range (100.67.x.x); Wazuh v4.14.8; Ubuntu 26.04.1; registered 14 Oct 00:50:40; vulnerability counts; no SCA results; no FIM events in the last hour | That ATT&CK tactics happened ("Lateral Movement 27" is rule tagging); PCI compliance; exploitability of the vulnerability findings; FIM coverage of `/etc/ssh` |
 
-| ID | Artifact | Observed evidence |
-|:---:|:---|:---|
-| AUTH 01 | endpoint state capture | Current endpoint, Wazuh agent, and active security services |
-| AUTH 02 | sudo events capture | Successful sudo to root events in Wazuh |
-| AUTH 03 | Rule 5710 capture | Multiple attempts to authenticate with non existent users |
-| AUTH 04 | Rule 5712 capture | Wazuh correlated brute force activity against non existent users |
-| AUTH 05 | Fail2Ban capture | Active sshd jail with cumulative failed attempts and bans |
-| AUTH 06 | host auth log capture | Raw SSH failures, accepted administrative public key login, and sudo context |
+## Case 004: Controlled sudo test
 
-These artifacts support the conclusion that the public SSH service is receiving unsolicited authentication attempts and that Wazuh and Fail2Ban are observing/responding to that activity. They do **not** prove successful compromise.
+| ID | File | Scope | Shows | Does not prove |
+|:---|:---|:---|:---|:---|
+| PRIV-01 | `observed/09_priv01_sudo_id_whoami_terminal.png` | Endpoint terminal, captured 12:45 EST | `sudo id` / `sudo whoami` → root, no password prompt; "System restart required" | Exact run times |
+| PRIV-02 | `observed/10_priv02_sudo_search_1h.png` | Events · free text `sudo` · 11:43–12:43 EST | 15 hits = 5 × (5501 → 5402 → 5502) | Every privileged action (`su`, `pkexec` wouldn't match); command names |
+| PRIV-03 | `observed/11_priv03_rule5402_events_1h.png` | Events · `rule.id: 5402`, agent 001 · 11:52–12:52 EST | 3 sudo-to-root alerts: 12:09:10, 12:38:50, 12:39:02 | Command per alert (`data.command` not expanded) |
+| PRIV-04 | `observed/12_priv04_rule5402_dashboard_scope.png` | Dashboard · same filters | Total 3; auth tiles 0 (filter-scoped); groups sudo/syslog; PCI 10.2.2/10.2.5 tags | Host authentication activity |
 
-## Sanitization and Publication Rules
+---
 
-Before publishing a new screenshot:
+## Redaction and publication rules
 
-1. Mask private manager hostnames and private/Tailscale addresses that identify the lab control plane.
-2. Preserve timestamps, rule IDs, levels, event descriptions, and counts unless there is a privacy reason to redact them.
-3. Do not alter evidence to make an event look more severe or complete than it was.
-4. Keep test generated telemetry clearly separated from unsolicited observed telemetry.
-5. Record the query scope when dashboard counters are shown.
+Applied to every published capture:
 
-This evidence policy is intentionally conservative so that every portfolio claim can survive technical interview scrutiny.
+1. **Manager hostname:** the tail is masked; the `ip-172-31-` prefix is kept because it shows the AWS EC2 private-DNS naming pattern.
+2. **Tailscale addresses:** the last two octets are masked; the first two (for example `100.107.`) are kept so the `100.64.0.0/10` range stays visible. That is how admin traffic is told apart from internet traffic.
+3. **The host's public IP and the SSH key fingerprint hash** are fully masked.
+4. **Internet source addresses are kept.** They are scanners, and they are the evidence for correlation (for example, `80.94.92.55` in both the host log and Fail2Ban).
+5. Timestamps, rule IDs, levels, descriptions and counts are never altered.
+6. My own test traffic is labelled as such and kept separate from internet telemetry.
+7. Dashboard counters are always reported with their query scope.
+
+Masks are solid boxes (black on light UI, grey on terminal backgrounds) so the redaction is visible, not disguised.

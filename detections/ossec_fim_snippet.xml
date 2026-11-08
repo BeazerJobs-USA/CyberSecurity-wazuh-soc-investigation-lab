@@ -2,43 +2,43 @@
   Wazuh agent FIM reference for the Ubuntu endpoint.
 
   IMPORTANT:
-  Wazuh real-time monitoring works on directories, not individual files.
-  Monitor /etc/ssh in real time and let the custom rules in local_rules.xml
-  restrict alerting to sshd_config and sshd_config.d/*.
+  Wazuh real-time monitoring works on directories, not individual files
+  (syscheck reference: "Real time only works with directories, not individual
+  files"). Monitor /etc/ssh in real time and let the custom rules in
+  local_rules.xml restrict alerting to sshd_config and sshd_config.d/*.conf.
 
-  Add this <directories> entry inside the EXISTING <syscheck> block of
-  /var/ossec/etc/ossec.conf. Do not add a second <syscheck> block.
+  Add this directories entry inside the EXISTING syscheck block of
+  /var/ossec/etc/ossec.conf. Do not add a second syscheck block.
 
   Restart after a configuration change:
     sudo systemctl restart wazuh-agent
 
-  report_changes="yes" requests text change reporting for supported text files.
-  The Wazuh diff size limit is configurable; do not assume every change will
-  contain syscheck.diff without checking the generated alert.
+  report_changes="yes" asks for text diffs (syscheck.diff in the alert). Diffs
+  are limited by diff_size_limit (default 50MB) and only work for text files;
+  check the generated alert before claiming a diff was captured.
+
+  How to prove which mode is live: open any FIM alert for /etc/ssh and read
+  syscheck.mode ("realtime", "scheduled" or "whodata").
 
   STATUS:
-  This file is the corrected repository reference configuration. The currently
-  deployed agent configuration must be verified from the live ossec.conf before
-  claiming this exact snippet is active.
+  This is the repository reference configuration. The deployed agent
+  configuration has NOT been captured yet (scripts/collect_lab_evidence.sh
+  prints it, including any centralized agent.conf from the manager group).
 -->
 <syscheck>
   <directories check_all="yes" report_changes="yes" realtime="yes">/etc/ssh</directories>
 </syscheck>
 
 <!--
-  PLANNED WHO-DATA UPGRADE.
+  PLANNED WHO-DATA UPGRADE (not enabled).
 
-  Linux who-data can enrich FIM events with user/process context. Wazuh can use
-  the Linux Audit subsystem as the provider. auditd is active on the endpoint,
-  but this repository does not yet contain alert evidence proving who-data is
-  enabled for /etc/ssh.
+  Linux who-data adds user and process context to FIM alerts, using the Linux
+  Audit subsystem as the provider. This repository has no evidence that auditd
+  is running on the endpoint or that who-data is enabled for /etc/ssh.
 
   Example reference:
 
   <syscheck>
     <directories check_all="yes" report_changes="yes" whodata="yes">/etc/ssh</directories>
-    <whodata>
-      <provider>audit</provider>
-    </whodata>
   </syscheck>
 -->
