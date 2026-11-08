@@ -10,6 +10,14 @@
 | **Expected rules** | Create → 100101, Modify → 100100, Delete → 100102 |
 | **Status** | **Test recorded; Wazuh alerts not captured. The recorded run cannot be matched to the current agent, so it must be re-run.** |
 
+## Why this case matters
+
+I built this test to exercise the full create, modify, and delete lifecycle in the SSH configuration directory without changing SSH behavior. The important lesson was not the script itself. It was realizing that **executing a test is not the same thing as proving the detection worked**.
+
+The timeline proves the filesystem actions happened. It does not prove Wazuh generated Rules 100101, 100100, and 100102. I therefore changed the case status instead of calling it verified and defined exactly what evidence would be required on the next run.
+
+This case demonstrates how I treat validation: a command, script, or expected result is not enough. I want the SIEM evidence tied back to the exact action before I call a detection successful.
+
 ## Detection flow
 
 <div align="center">
