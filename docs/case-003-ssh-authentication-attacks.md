@@ -11,6 +11,16 @@
 | **Disposition** | **True positive: opportunistic, unsuccessful SSH probing** in the data reviewed. The two `fakeuser` alerts are a **benign true positive** (my own test). No incident declared. |
 | **Open item** | A full review of *successful* SSH logins for the period has not been done yet (see Next steps). |
 
+## Why this case matters
+
+This is the strongest investigation in the lab because the activity was not manufactured for the screenshot. The public SSH service was receiving real internet probing, and my job was to determine what those alerts actually meant.
+
+I started with Wazuh, then went back to the Linux host for ground truth. I correlated alert times with `auth.log`, accounted for the difference between Eastern time and UTC, separated my own Tailscale login and deliberate test traffic, and checked Fail2Ban to see whether repeat sources were being acted on.
+
+That process changed the conclusion from a vague "SSH attacks detected" into something defensible: **real opportunistic probing was present, Wazuh and Fail2Ban were seeing and responding to it, my own test activity was mixed into the alert count, and the reviewed evidence did not show a successful unauthorized login.**
+
+The value of the case is the reasoning process: verify the alert, identify the source context, correlate independent data sources, remove known benign activity, and only then assign a disposition.
+
 > [!NOTE]
 > **Time zones.** The Wazuh dashboard shows browser local time (US Eastern, EST = UTC−5 on 5 Nov). The host's `auth.log` uses UTC (`+00:00`). So 11:43 on the dashboard is 16:43 in the host log. Wazuh's `timestamp` is when the manager processed the event; in these captures it is about one second after the host log line.
 
